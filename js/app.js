@@ -39,6 +39,7 @@ import { PRESET_MOLECULES, REACTION_OUTCOMES, calculateStereoOutcome, generateSt
 import { renderSN2Mechanism, renderSN1Mechanism, renderRelationshipDiagram } from './stereo-renderer.js';
 import { MECHANISMS, getMechanism, getStepData, generateMechanismQuestion, checkMechanismAnswer } from './mechanism-animator.js';
 import { renderMechanism, renderSN2Mechanism as renderMechSN2, renderSN1Mechanism as renderMechSN1, renderE2Mechanism as renderMechE2, renderAdditionMechanism, renderBrominationMechanism } from './mechanism-renderer.js';
+import { initBuilder } from './smiles-builder.js';
 
 console.log('app.js module loaded - all imports successful');
 
@@ -260,6 +261,9 @@ function init() {
 
     // Set up event listeners
     setupEventListeners();
+
+    // Initialize SMILES Builder tool
+    initBuilder();
 
     // Reset viewer dropdown to 'chair' on page load for consistent state
     // (browsers may remember previous selection on refresh)

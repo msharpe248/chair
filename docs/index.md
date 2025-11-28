@@ -75,6 +75,9 @@ Step-by-step animated mechanisms for common reactions:
 ### Mechanism Animator
 1. [Mechanism Guide](mechanism-animator.md) - Understanding reaction mechanisms with curved-arrow notation
 
+### General Guides
+1. [SMILES Notation Guide](smiles-guide.md) - How to write molecular structures as SMILES strings
+
 ## Why These Tools?
 
 In organic chemistry, understanding molecular structure and reactivity is fundamental:
