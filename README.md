@@ -1,16 +1,86 @@
-# Chair Conformation Viewer
+# Organic Chemistry Visualization Suite
 
-An interactive web application for visualizing cyclohexane chair conformations. Designed to help university-level organic chemistry students verify their problem sets involving conformational analysis.
+An interactive web application suite for visualizing and understanding organic chemistry concepts. Designed to help university-level organic chemistry students with conformational analysis, reaction mechanisms, and stereochemistry.
 
-## Features
+## Available Viewers
+
+### 1. Chair Conformation Viewer
+Visualize cyclohexane chair conformations with real-time energy calculations.
 
 - **Interactive Chair Visualization**: Click on any carbon to add substituents
 - **Axial/Equatorial Positioning**: Choose where to place each substituent
 - **Ring Flip**: See how substituents swap between axial and equatorial positions
 - **Energy Calculations**: Automatic calculation of conformational strain using A-values
-- **Equilibrium Prediction**: Shows which chair conformation is preferred and by how much
+- **Newman Projections**: View any C-C bond as a Newman projection
+- **Pyranose Sugars**: Visualize glucose, galactose, mannose, and other sugars
+- **Decalin Systems**: Explore cis and trans fused ring systems
+- **3D Rotation**: Rotate the view in 3D space
+- **Quiz Mode**: Test your understanding with practice questions
 
-## Supported Substituents
+### 2. Reaction Energy Diagram Viewer
+Understand reaction mechanisms and thermodynamics.
+
+- **Mechanism Prediction**: Predict SN1, SN2, E1, E2 from reaction conditions
+- **SMILES Analysis**: Enter reactant/product SMILES to analyze reactions
+- **Preset Diagrams**: View standard energy profiles for common reactions
+- **Custom Diagrams**: Create your own with draggable points and sliders
+- **Competing Mechanisms**: Overlay multiple pathways for comparison
+- **Quiz Mode**: Practice identifying mechanisms from energy diagrams
+
+### 3. E2 Stereochemistry Viewer
+Master the anti-periplanar requirement for E2 eliminations.
+
+- **Newman Projection Visualization**: See the spatial relationship between β-H and leaving group
+- **Anti-Periplanar Highlighting**: Color-coded bonds show which H's can eliminate
+  - Green = Anti-periplanar (180°) - CAN eliminate
+  - Orange = Gauche (60°) - Cannot eliminate
+  - Red = Leaving group
+- **Dihedral Angles**: See the exact angle for each β-hydrogen
+- **Zaitsev vs Hofmann**: Compare product predictions with different bases
+- **Classic Examples**: Menthyl vs neomenthyl chloride demonstrates the requirement
+
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/msharpe248/chair.git
+cd chair
+
+# Serve with Python
+python3 -m http.server 8080
+
+# Or with Node.js
+npx serve
+
+# Open in browser
+open http://localhost:8080
+```
+
+## How to Use
+
+### Chair Conformation Viewer
+1. Select **"Chair Conformation Viewer"** from the dropdown
+2. Click on any carbon (C1-C6) to add substituents
+3. Choose axial or equatorial position
+4. Click **"Ring Flip"** to see the alternate conformation
+5. Compare energies in the panel on the right
+
+### Reaction Energy Diagram Viewer
+1. Select **"Reaction Energy Diagram"** from the dropdown
+2. Choose a mode:
+   - **Conditions**: Set substrate, nucleophile, solvent, temperature
+   - **SMILES**: Enter reactant → product structures
+   - **Preset**: Select standard reaction types
+3. View the predicted mechanism and energy diagram
+
+### E2 Stereochemistry Viewer
+1. Select **"E2 Stereochemistry"** from the dropdown
+2. Choose a substrate (e.g., 2-bromobutane, menthyl chloride)
+3. Select a base (bulky vs non-bulky)
+4. Observe which β-hydrogens are anti-periplanar (green)
+5. See the predicted major product
+
+## Supported Substituents (Chair Viewer)
 
 | Group | A-value (kcal/mol) |
 |-------|-------------------|
@@ -30,30 +100,33 @@ An interactive web application for visualizing cyclohexane chair conformations. 
 | NH₂ | 1.23 |
 | COOH | 1.35 |
 
-## How to Use
+## Educational Background
 
-1. **Add Substituents**: Click on any carbon (numbered 1-6) to open the substituent picker
-2. **Choose Position**: Select whether to place the substituent in the axial or equatorial position
-3. **Select Group**: Choose from the dropdown menu of available substituents
-4. **Ring Flip**: Click the "Ring Flip" button to see the alternate chair conformation
-5. **Compare Energies**: The energy panel shows the strain energy for both conformations
+### Chair Conformations
+Cyclohexane adopts a "chair" conformation to minimize angle strain and torsional strain. In this conformation:
+- **Axial positions** point straight up or down, perpendicular to the ring
+- **Equatorial positions** point outward, roughly in the plane of the ring
 
-## Running Locally
+### 1,3-Diaxial Interactions
+When bulky substituents occupy axial positions, they experience steric strain with other axial groups on the same face of the ring. This strain is quantified by **A-values**.
 
-No build step required. Simply serve the files with any HTTP server:
+### E2 Anti-Periplanar Requirement
+E2 elimination requires the β-hydrogen and leaving group to be at a 180° dihedral angle (anti-periplanar). This allows proper orbital overlap for the concerted mechanism.
 
-```bash
-# Using Python
-python3 -m http.server 8080
+### Mechanism Selection (SN1/SN2/E1/E2)
+The choice of mechanism depends on:
+- **Substrate**: Methyl/1° favor SN2, 3° favor SN1/E1
+- **Nucleophile/Base**: Strong favors SN2/E2, weak favors SN1/E1
+- **Solvent**: Polar aprotic favors SN2, polar protic favors SN1
+- **Temperature**: Higher temperature favors elimination
 
-# Using Node.js
-npx serve
+## Technical Details
 
-# Using PHP
-php -S localhost:8080
-```
-
-Then open http://localhost:8080 in your browser.
+- Pure HTML/CSS/JavaScript (no build step, no dependencies)
+- SVG-based rendering for crisp, scalable graphics
+- ES6 modules for code organization
+- Dark mode support (automatic or manual toggle)
+- Export diagrams as PNG or SVG
 
 ## Deployment
 
@@ -64,29 +137,16 @@ This app is designed for easy deployment on GitHub Pages:
 3. Select "Deploy from branch" with `main` / `root`
 4. Your app will be live at `https://username.github.io/repo-name/`
 
-## Technical Details
+## Documentation
 
-- Pure HTML/CSS/JavaScript (no build step, no dependencies)
-- SVG-based rendering for crisp, scalable graphics
-- ES6 modules for code organization
-- A-values sourced from standard organic chemistry references
+Full documentation is available in the `docs/` folder or by clicking **"? Help"** in the app.
 
-## Educational Background
-
-### Chair Conformations
-
-Cyclohexane adopts a "chair" conformation to minimize angle strain and torsional strain. In this conformation:
-
-- **Axial positions** point straight up or down, perpendicular to the ring
-- **Equatorial positions** point outward, roughly in the plane of the ring
-
-### 1,3-Diaxial Interactions
-
-When bulky substituents occupy axial positions, they experience steric strain with other axial groups on the same face of the ring (at positions 1,3,5 or 2,4,6). This strain is quantified by **A-values**.
-
-### Ring Flip
-
-Cyclohexane undergoes rapid ring flipping at room temperature, interconverting between two chair conformations. During a ring flip, all axial substituents become equatorial and vice versa.
+- [Chair Conformation Theory](docs/theory.md)
+- [Using the Chair Viewer](docs/using-the-viewer.md)
+- [Pyranose Sugars](docs/sugars.md)
+- [Decalin & Fused Rings](docs/decalin.md)
+- [Reaction Energy Theory](docs/energy-theory.md)
+- [Using the Energy Viewer](docs/energy-viewer.md)
 
 ## License
 

@@ -13,6 +13,9 @@
         <option value="chair">Chair Conformation Viewer</option>
         <option value="energy">Reaction Energy Diagram</option>
         <option value="e2">E2 Stereochemistry</option>
+        <option value="alkene">Alkene Stability</option>
+        <option value="stereo">Stereochemistry Tracker</option>
+        <option value="mechanism">Mechanism Animator</option>
       </select>
     </div>
     <nav id="chair-mode-selector" class="mode-selector">
@@ -27,6 +30,9 @@
     </button>
     <button id="quiz-mode-btn" class="quiz-btn chair-only">Quiz Mode</button>
     <button id="energy-quiz-mode-btn" class="quiz-btn energy-only hidden">Quiz Mode</button>
+    <button id="alkene-quiz-mode-btn" class="quiz-btn alkene-only hidden">Quiz Mode</button>
+    <button id="stereo-quiz-mode-btn" class="quiz-btn stereo-only hidden">Quiz Mode</button>
+    <button id="mechanism-quiz-mode-btn" class="quiz-btn mechanism-only hidden">Quiz Mode</button>
   </header>
 
   <main>
@@ -325,6 +331,111 @@
         </div>
       </div>
 
+      <!-- Alkene Stability Controls (hidden by default) -->
+      <div id="alkene-controls" class="mode-controls hidden">
+        <div class="control-row">
+          <label for="alkene-comparison-set">Compare:</label>
+          <select id="alkene-comparison-set">
+            <option value="butene-isomers">Butene Isomers (C₄H₈)</option>
+            <option value="substitution-effect">Substitution Effect</option>
+            <option value="cis-trans">Cis vs Trans (E/Z)</option>
+            <option value="pentene-isomers">Pentene Isomers (C₅H₁₀)</option>
+            <option value="cyclic">Cyclic Alkenes</option>
+            <option value="custom">Custom Selection</option>
+          </select>
+        </div>
+        <div id="alkene-custom-select" class="alkene-custom-select hidden">
+          <label>Select alkenes:</label>
+          <div class="alkene-checkboxes">
+            <label><input type="checkbox" value="ethene"> Ethene</label>
+            <label><input type="checkbox" value="propene"> Propene</label>
+            <label><input type="checkbox" value="1-butene"> 1-Butene</label>
+            <label><input type="checkbox" value="cis-2-butene"> cis-2-Butene</label>
+            <label><input type="checkbox" value="trans-2-butene"> trans-2-Butene</label>
+            <label><input type="checkbox" value="isobutylene"> Isobutylene</label>
+            <label><input type="checkbox" value="2-methyl-2-butene"> 2-Methyl-2-butene</label>
+            <label><input type="checkbox" value="2,3-dimethyl-2-butene"> 2,3-Dimethyl-2-butene</label>
+            <label><input type="checkbox" value="cyclohexene"> Cyclohexene</label>
+            <label><input type="checkbox" value="1-methylcyclohexene"> 1-Methylcyclohexene</label>
+          </div>
+        </div>
+        <div class="alkene-view-toggle">
+          <button class="alkene-view-btn active" data-view="comparison">Bar Chart</button>
+          <button class="alkene-view-btn" data-view="energy">Energy Diagram</button>
+        </div>
+        <div class="control-row">
+          <label>
+            <input type="checkbox" id="alkene-highlight-most" checked>
+            Highlight most stable
+          </label>
+        </div>
+      </div>
+
+      <!-- Stereochemistry Tracker Controls (hidden by default) -->
+      <div id="stereo-controls" class="mode-controls hidden">
+        <div class="control-row">
+          <label for="stereo-mode-select">Mode:</label>
+          <select id="stereo-mode-select">
+            <option value="sn2">SN2 Inversion</option>
+            <option value="sn1">SN1 Racemization</option>
+            <option value="enantiomers">Enantiomers</option>
+            <option value="diastereomers">Diastereomers</option>
+          </select>
+        </div>
+        <div id="stereo-molecule-row" class="control-row">
+          <label for="stereo-molecule-select">Substrate:</label>
+          <select id="stereo-molecule-select">
+            <option value="2-bromobutane-r">(R)-2-Bromobutane</option>
+            <option value="2-bromobutane-s">(S)-2-Bromobutane</option>
+            <option value="2-chlorobutane-r">(R)-2-Chlorobutane</option>
+            <option value="lactic-acid-r">(R)-Lactic Acid</option>
+            <option value="lactic-acid-s">(S)-Lactic Acid</option>
+          </select>
+        </div>
+        <div id="stereo-config-row" class="control-row">
+          <label>Start Config:</label>
+          <div class="config-toggle">
+            <button class="config-btn selected" data-config="R">(R)</button>
+            <button class="config-btn" data-config="S">(S)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mechanism Animator Controls (hidden by default) -->
+      <div id="mechanism-controls" class="mode-controls hidden">
+        <div class="control-row">
+          <label for="mechanism-type-select">Reaction Type:</label>
+          <select id="mechanism-type-select">
+            <optgroup label="Substitution">
+              <option value="sn2">SN2 (Bimolecular)</option>
+              <option value="sn1">SN1 (Unimolecular)</option>
+            </optgroup>
+            <optgroup label="Elimination">
+              <option value="e2">E2 (Bimolecular)</option>
+              <option value="e1">E1 (Unimolecular)</option>
+            </optgroup>
+            <optgroup label="Addition">
+              <option value="addition-hbr">HBr Addition</option>
+              <option value="addition-br2">Br₂ Addition</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="control-row mechanism-step-controls">
+          <label>Step:</label>
+          <div class="step-navigation">
+            <button id="mechanism-prev-btn" class="step-btn" disabled>◀ Prev</button>
+            <span id="mechanism-step-indicator">1 / 1</span>
+            <button id="mechanism-next-btn" class="step-btn">Next ▶</button>
+          </div>
+        </div>
+        <div class="control-row">
+          <label>
+            <input type="checkbox" id="mechanism-show-arrows" checked>
+            Show electron flow arrows
+          </label>
+        </div>
+      </div>
+
       <div class="chair-container" id="chair-container">
         <div class="svg-wrapper" id="svg-wrapper">
           <svg id="chair-svg" viewBox="0 0 400 350"></svg>
@@ -517,6 +628,179 @@
           <div class="quiz-actions">
             <button id="e2-new-question-btn" class="primary-btn">New Question</button>
             <button id="e2-submit-btn" class="primary-btn" disabled>Submit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alkene Stability Panel -->
+      <div id="alkene-panel" class="energy-display hidden">
+        <h3>Alkene Stability</h3>
+
+        <!-- Stability Ranking -->
+        <div id="alkene-ranking" class="alkene-ranking">
+          <h4>Stability Ranking</h4>
+          <p class="ranking-subtitle">(Most to Least Stable)</p>
+          <ol id="alkene-ranking-list" class="alkene-ranking-list">
+            <li class="empty-message">Select a comparison set to begin</li>
+          </ol>
+        </div>
+
+        <!-- Selected Alkene Info -->
+        <div id="alkene-info" class="alkene-info">
+          <h4>Heat of Hydrogenation</h4>
+          <div class="info-row">
+            <span>Most Stable:</span>
+            <span id="alkene-most-stable">—</span>
+          </div>
+          <div class="info-row">
+            <span>ΔH:</span>
+            <span id="alkene-most-stable-dh">—</span>
+          </div>
+          <div class="info-row">
+            <span>Least Stable:</span>
+            <span id="alkene-least-stable">—</span>
+          </div>
+          <div class="info-row">
+            <span>ΔH:</span>
+            <span id="alkene-least-stable-dh">—</span>
+          </div>
+          <div class="info-row highlight">
+            <span>Stability Difference:</span>
+            <span id="alkene-diff">—</span>
+          </div>
+        </div>
+
+        <!-- Explanation -->
+        <div id="alkene-explanation" class="alkene-explanation">
+          <h4>Why More Substituted = More Stable?</h4>
+          <ul class="explanation-list">
+            <li><strong>Hyperconjugation:</strong> Alkyl C-H σ bonds overlap with π* orbital</li>
+            <li>More substituents = more hyperconjugation = more stable</li>
+            <li><strong>E vs Z:</strong> Trans (E) is more stable due to less steric strain</li>
+          </ul>
+        </div>
+
+        <!-- Alkene Quiz Panel -->
+        <div id="alkene-quiz-panel" class="energy-quiz-panel hidden">
+          <div class="quiz-header">
+            <h4>Alkene Stability Quiz</h4>
+            <div class="quiz-score">Score: <span id="alkene-quiz-score">0/0</span></div>
+          </div>
+          <div class="quiz-question-area">
+            <p id="alkene-quiz-question" class="quiz-question">Click "New Question" to start!</p>
+            <div id="alkene-quiz-options" class="quiz-options"></div>
+            <div id="alkene-quiz-feedback" class="quiz-feedback hidden"></div>
+          </div>
+          <div class="quiz-actions">
+            <button id="alkene-new-question-btn" class="primary-btn">New Question</button>
+            <button id="alkene-submit-btn" class="primary-btn" disabled>Submit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stereochemistry Tracker Panel -->
+      <div id="stereo-panel" class="energy-display hidden">
+        <h3>Stereochemistry</h3>
+
+        <!-- Outcome Summary -->
+        <div id="stereo-outcome" class="stereo-outcome">
+          <h4>Reaction Outcome</h4>
+          <div class="outcome-row">
+            <span>Starting Config:</span>
+            <span id="stereo-start-config" class="config-badge">—</span>
+          </div>
+          <div class="outcome-row">
+            <span>Product Config:</span>
+            <span id="stereo-end-config" class="config-badge">—</span>
+          </div>
+          <div class="outcome-row highlight">
+            <span>Result:</span>
+            <span id="stereo-result">—</span>
+          </div>
+        </div>
+
+        <!-- Explanation -->
+        <div id="stereo-explanation" class="stereo-explanation">
+          <h4>Key Points</h4>
+          <ul id="stereo-explanation-list" class="explanation-list">
+            <li>Select a mode to see stereochemistry concepts</li>
+          </ul>
+        </div>
+
+        <!-- Stereo Quiz Panel -->
+        <div id="stereo-quiz-panel" class="energy-quiz-panel hidden">
+          <div class="quiz-header">
+            <h4>Stereochemistry Quiz</h4>
+            <div class="quiz-score">Score: <span id="stereo-quiz-score">0/0</span></div>
+          </div>
+          <div class="quiz-question-area">
+            <p id="stereo-quiz-question" class="quiz-question">Click "New Question" to start!</p>
+            <div id="stereo-quiz-options" class="quiz-options"></div>
+            <div id="stereo-quiz-feedback" class="quiz-feedback hidden"></div>
+          </div>
+          <div class="quiz-actions">
+            <button id="stereo-new-question-btn" class="primary-btn">New Question</button>
+            <button id="stereo-submit-btn" class="primary-btn" disabled>Submit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mechanism Animator Panel -->
+      <div id="mechanism-panel" class="energy-display hidden">
+        <h3>Mechanism Details</h3>
+
+        <!-- Mechanism Info -->
+        <div id="mechanism-info" class="mechanism-info">
+          <div class="mechanism-name">
+            <span id="mechanism-name-display">SN2 - Nucleophilic Substitution</span>
+          </div>
+          <div class="mechanism-type-badge" id="mechanism-type-badge">
+            Substitution
+          </div>
+        </div>
+
+        <!-- Current Step Info -->
+        <div id="mechanism-step-info" class="mechanism-step-info">
+          <h4>Current Step</h4>
+          <div class="step-title" id="mechanism-step-title">Backside Attack</div>
+          <div class="step-description" id="mechanism-step-description">
+            Nucleophile attacks carbon 180° from leaving group
+          </div>
+        </div>
+
+        <!-- Key Points -->
+        <div id="mechanism-key-points" class="mechanism-key-points">
+          <h4>Key Points</h4>
+          <ul id="mechanism-points-list" class="explanation-list">
+            <li>Rate = k[substrate][nucleophile]</li>
+            <li>Complete inversion of configuration</li>
+            <li>Favored by strong nucleophile</li>
+          </ul>
+        </div>
+
+        <!-- Products -->
+        <div id="mechanism-products" class="mechanism-products">
+          <h4>Products</h4>
+          <div id="mechanism-products-list" class="products-list">
+            <span class="product-item">Alcohol (inverted)</span>
+            <span class="product-item">Br⁻</span>
+          </div>
+        </div>
+
+        <!-- Mechanism Quiz Panel -->
+        <div id="mechanism-quiz-panel" class="energy-quiz-panel hidden">
+          <div class="quiz-header">
+            <h4>Mechanism Quiz</h4>
+            <div class="quiz-score">Score: <span id="mechanism-quiz-score">0/0</span></div>
+          </div>
+          <div class="quiz-question-area">
+            <p id="mechanism-quiz-question" class="quiz-question">Click "New Question" to start!</p>
+            <div id="mechanism-quiz-options" class="quiz-options"></div>
+            <div id="mechanism-quiz-feedback" class="quiz-feedback hidden"></div>
+          </div>
+          <div class="quiz-actions">
+            <button id="mechanism-new-question-btn" class="primary-btn">New Question</button>
+            <button id="mechanism-submit-btn" class="primary-btn" disabled>Submit</button>
           </div>
         </div>
       </div>

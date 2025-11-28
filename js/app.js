@@ -33,6 +33,14 @@ import { analyzeReaction, getEnergyFromSMILES, REACTION_EXAMPLES } from './react
 import { generateEnergyQuestion, checkEnergyAnswer, resetEnergyQuiz, getEnergyQuizState } from './energy-quiz.js';
 import { E2_PRESETS, analyzeE2, generateE2Question } from './e2-stereo.js';
 import { renderE2Newman, getE2Analysis, E2_NEWMAN_CONFIGS } from './e2-newman.js';
+import { HYDROGENATION_DATA, COMPARISON_SETS, getStabilityRanking, generateAlkeneQuestion, checkAlkeneAnswer } from './alkene-stability.js';
+import { renderAlkeneComparison, renderHydrogenationDiagram } from './alkene-renderer.js';
+import { PRESET_MOLECULES, REACTION_OUTCOMES, calculateStereoOutcome, generateStereoQuestion, checkStereoAnswer } from './stereochemistry.js';
+import { renderSN2Mechanism, renderSN1Mechanism, renderRelationshipDiagram } from './stereo-renderer.js';
+import { MECHANISMS, getMechanism, getStepData, generateMechanismQuestion, checkMechanismAnswer } from './mechanism-animator.js';
+import { renderMechanism, renderSN2Mechanism as renderMechSN2, renderSN1Mechanism as renderMechSN1, renderE2Mechanism as renderMechE2, renderAdditionMechanism, renderBrominationMechanism } from './mechanism-renderer.js';
+
+console.log('app.js module loaded - all imports successful');
 
 // Application State
 let state = createMoleculeState();
@@ -99,6 +107,34 @@ let e2QuizScore = { correct: 0, total: 0 };
 let currentE2Question = null;
 let selectedE2Answer = null;
 let selectedEnergyAnswer = null;
+
+// Alkene stability state
+let alkeneComparisonSet = 'butene-isomers';
+let alkeneViewMode = 'comparison';  // 'comparison' or 'energy'
+let alkeneHighlightMost = true;
+let alkeneCustomSelection = [];
+let alkeneQuizActive = false;
+let alkeneQuizScore = { correct: 0, total: 0 };
+let currentAlkeneQuestion = null;
+let selectedAlkeneAnswer = null;
+
+// Stereochemistry tracker state
+let stereoMode = 'sn2';  // 'sn2', 'sn1', 'enantiomers', 'diastereomers'
+let stereoStartConfig = 'R';
+let stereoMolecule = '2-bromobutane-r';
+let stereoQuizActive = false;
+let stereoQuizScore = { correct: 0, total: 0 };
+let currentStereoQuestion = null;
+let selectedStereoAnswer = null;
+
+// Mechanism animator state
+let mechanismType = 'sn2';  // 'sn2', 'sn1', 'e2', 'e1', 'addition-hbr', 'addition-br2'
+let mechanismStep = 0;
+let mechanismShowArrows = true;
+let mechanismQuizActive = false;
+let mechanismQuizScore = { correct: 0, total: 0 };
+let currentMechanismQuestion = null;
+let selectedMechanismAnswer = null;
 
 // Preset definitions for cyclohexane examples
 const PRESETS = {
@@ -214,17 +250,23 @@ let showInteractionsCheckbox;
  * Initialize the application
  */
 function init() {
-  // Get DOM elements
-  svg = document.getElementById('chair-svg');
-  picker = document.getElementById('substituent-picker');
-  showLabelsCheckbox = document.getElementById('show-labels');
-  showInteractionsCheckbox = document.getElementById('show-interactions');
+  console.log('App initializing...');
+  try {
+    // Get DOM elements
+    svg = document.getElementById('chair-svg');
+    picker = document.getElementById('substituent-picker');
+    showLabelsCheckbox = document.getElementById('show-labels');
+    showInteractionsCheckbox = document.getElementById('show-interactions');
 
-  // Set up event listeners
-  setupEventListeners();
+    // Set up event listeners
+    setupEventListeners();
 
-  // Initial render
-  renderView();
+    // Initial render
+    renderView();
+    console.log('App initialized successfully');
+  } catch (error) {
+    console.error('Error during app initialization:', error);
+  }
 }
 
 /**
@@ -396,6 +438,44 @@ function setupEventListeners() {
   document.getElementById('e2-base-select').addEventListener('change', handleE2BaseChange);
   document.getElementById('e2-show-anti').addEventListener('change', handleE2HighlightToggle);
   document.getElementById('e2-analyze-btn').addEventListener('click', handleE2Analyze);
+
+  // Alkene stability controls
+  document.getElementById('alkene-comparison-set').addEventListener('change', handleAlkeneComparisonChange);
+  document.getElementById('alkene-highlight-most').addEventListener('change', handleAlkeneHighlightToggle);
+  document.getElementById('alkene-quiz-mode-btn').addEventListener('click', toggleAlkeneQuizMode);
+  document.getElementById('alkene-new-question-btn').addEventListener('click', handleAlkeneNewQuestion);
+  document.getElementById('alkene-submit-btn').addEventListener('click', handleAlkeneSubmitAnswer);
+
+  // Alkene view toggle buttons
+  document.querySelectorAll('.alkene-view-btn').forEach(btn => {
+    btn.addEventListener('click', handleAlkeneViewToggle);
+  });
+
+  // Custom alkene checkboxes
+  document.querySelectorAll('.alkene-checkboxes input').forEach(checkbox => {
+    checkbox.addEventListener('change', handleAlkeneCustomSelectionChange);
+  });
+
+  // Stereochemistry tracker controls
+  document.getElementById('stereo-mode-select').addEventListener('change', handleStereoModeChange);
+  document.getElementById('stereo-molecule-select').addEventListener('change', handleStereoMoleculeChange);
+  document.getElementById('stereo-quiz-mode-btn').addEventListener('click', toggleStereoQuizMode);
+  document.getElementById('stereo-new-question-btn').addEventListener('click', handleStereoNewQuestion);
+  document.getElementById('stereo-submit-btn').addEventListener('click', handleStereoSubmitAnswer);
+
+  // Config toggle buttons
+  document.querySelectorAll('.config-btn').forEach(btn => {
+    btn.addEventListener('click', handleConfigToggle);
+  });
+
+  // Mechanism animator controls
+  document.getElementById('mechanism-type-select').addEventListener('change', handleMechanismTypeChange);
+  document.getElementById('mechanism-prev-btn').addEventListener('click', handleMechanismPrevStep);
+  document.getElementById('mechanism-next-btn').addEventListener('click', handleMechanismNextStep);
+  document.getElementById('mechanism-show-arrows').addEventListener('change', handleMechanismArrowToggle);
+  document.getElementById('mechanism-quiz-mode-btn').addEventListener('click', toggleMechanismQuizMode);
+  document.getElementById('mechanism-new-question-btn').addEventListener('click', handleMechanismNewQuestion);
+  document.getElementById('mechanism-submit-btn').addEventListener('click', handleMechanismSubmitAnswer);
 
   // Initialize theme
   initTheme();
@@ -1139,13 +1219,16 @@ function updateQuizScoreDisplay() {
  * Handle switching between viewers (chair, energy)
  */
 function handleViewerChange(e) {
-  const newViewer = e.target.value;
-  if (newViewer === currentViewer) return;
+  try {
+    const newViewer = e.target.value;
+    console.log('handleViewerChange called:', newViewer);
+    if (newViewer === currentViewer) return;
 
-  currentViewer = newViewer;
+    currentViewer = newViewer;
+    console.log('Switching to viewer:', currentViewer);
 
-  // Hide all mode controls first
-  document.querySelectorAll('.mode-controls').forEach(el => el.classList.add('hidden'));
+    // Hide all mode controls first
+    document.querySelectorAll('.mode-controls').forEach(el => el.classList.add('hidden'));
 
   // Show/hide chair-only elements
   document.querySelectorAll('.chair-only').forEach(el => {
@@ -1167,9 +1250,35 @@ function handleViewerChange(e) {
   const reactionPanel = document.getElementById('reaction-energy-panel');
   const decalinPanel = document.getElementById('decalin-energy-panel');
   const e2Panel = document.getElementById('e2-panel');
+  const alkenePanel = document.getElementById('alkene-panel');
 
-  // Hide E2 panel by default
+  // Hide E2, alkene, and stereo panels by default
   e2Panel.classList.add('hidden');
+  alkenePanel.classList.add('hidden');
+  const stereoPanel = document.getElementById('stereo-panel');
+  stereoPanel.classList.add('hidden');
+
+  // Hide alkene-only elements by default
+  document.querySelectorAll('.alkene-only').forEach(el => {
+    el.style.display = 'none';
+    el.classList.add('hidden');
+  });
+
+  // Hide stereo-only elements by default
+  document.querySelectorAll('.stereo-only').forEach(el => {
+    el.style.display = 'none';
+    el.classList.add('hidden');
+  });
+
+  // Hide mechanism-only elements by default
+  document.querySelectorAll('.mechanism-only').forEach(el => {
+    el.style.display = 'none';
+    el.classList.add('hidden');
+  });
+
+  // Hide mechanism panel by default
+  const mechanismPanel = document.getElementById('mechanism-panel');
+  mechanismPanel.classList.add('hidden');
 
   if (currentViewer === 'chair') {
     // Show chair-specific controls based on current mode
@@ -1226,8 +1335,86 @@ function handleViewerChange(e) {
     reactionPanel.classList.add('hidden');
     document.getElementById('e2-panel').classList.remove('hidden');
 
+    // Reset SVG viewBox and transforms for E2 viewer
+    const svg = document.getElementById('chair-svg');
+    svg.setAttribute('viewBox', '0 0 400 350');
+    svg.style.transform = '';
+
     // Render E2 Newman projection
+    console.log('About to call renderE2View');
     renderE2View();
+  } else if (currentViewer === 'alkene') {
+    // Show alkene stability controls
+    document.getElementById('alkene-controls').classList.remove('hidden');
+    energyPanel.classList.add('hidden');
+    decalinPanel.classList.add('hidden');
+    reactionPanel.classList.add('hidden');
+    document.getElementById('alkene-panel').classList.remove('hidden');
+
+    // Show alkene quiz button, hide others
+    document.querySelectorAll('.alkene-only').forEach(el => {
+      el.style.display = '';
+      el.classList.remove('hidden');
+    });
+
+    // Reset SVG viewBox and transforms for alkene viewer
+    const svg = document.getElementById('chair-svg');
+    svg.setAttribute('viewBox', '0 0 400 350');
+    svg.style.transform = '';
+
+    // Render alkene view
+    console.log('About to call renderAlkeneView');
+    renderAlkeneView();
+  } else if (currentViewer === 'stereo') {
+    // Show stereochemistry tracker controls
+    document.getElementById('stereo-controls').classList.remove('hidden');
+    energyPanel.classList.add('hidden');
+    decalinPanel.classList.add('hidden');
+    reactionPanel.classList.add('hidden');
+    document.getElementById('stereo-panel').classList.remove('hidden');
+
+    // Show stereo quiz button, hide others
+    document.querySelectorAll('.stereo-only').forEach(el => {
+      el.style.display = '';
+      el.classList.remove('hidden');
+    });
+
+    // Reset SVG viewBox and transforms for stereo viewer
+    const svg = document.getElementById('chair-svg');
+    svg.setAttribute('viewBox', '0 0 400 350');
+    svg.style.transform = '';
+
+    // Render stereo view
+    console.log('About to call renderStereoView');
+    renderStereoView();
+  } else if (currentViewer === 'mechanism') {
+    // Show mechanism animator controls
+    document.getElementById('mechanism-controls').classList.remove('hidden');
+    energyPanel.classList.add('hidden');
+    decalinPanel.classList.add('hidden');
+    reactionPanel.classList.add('hidden');
+    document.getElementById('mechanism-panel').classList.remove('hidden');
+
+    // Show mechanism quiz button, hide others
+    document.querySelectorAll('.mechanism-only').forEach(el => {
+      el.style.display = '';
+      el.classList.remove('hidden');
+    });
+
+    // Reset step to 0 when entering mechanism view
+    mechanismStep = 0;
+
+    // Reset SVG viewBox and transforms for mechanism viewer
+    const svg = document.getElementById('chair-svg');
+    svg.setAttribute('viewBox', '0 0 400 350');
+    svg.style.transform = '';
+
+    // Render mechanism view
+    console.log('About to call renderMechanismView');
+    renderMechanismView();
+  }
+  } catch (error) {
+    console.error('Error in handleViewerChange:', error);
   }
 }
 
@@ -1235,9 +1422,16 @@ function handleViewerChange(e) {
  * Render E2 stereochemistry view
  */
 function renderE2View() {
+  console.log('renderE2View called');
   const svg = document.getElementById('chair-svg');
-  renderE2Newman(svg, e2Substrate, e2ShowHighlighting);
-  updateE2Panel();
+  console.log('SVG element:', svg);
+  try {
+    renderE2Newman(svg, e2Substrate, e2ShowHighlighting);
+    updateE2Panel();
+    console.log('renderE2View completed successfully');
+  } catch (error) {
+    console.error('Error in renderE2View:', error);
+  }
 }
 
 /**
@@ -1333,6 +1527,753 @@ function handleE2HighlightToggle(e) {
  */
 function handleE2Analyze() {
   renderE2View();
+}
+
+// ============== Alkene Stability Functions ==============
+
+/**
+ * Render alkene stability view
+ */
+function renderAlkeneView() {
+  console.log('renderAlkeneView called');
+  const svg = document.getElementById('chair-svg');
+  const alkeneKeys = getCurrentAlkeneKeys();
+  console.log('Alkene keys:', alkeneKeys);
+
+  try {
+    if (alkeneViewMode === 'comparison') {
+      renderAlkeneComparison(svg, alkeneKeys, { highlightMostStable: alkeneHighlightMost });
+    } else {
+      renderHydrogenationDiagram(svg, alkeneKeys);
+    }
+    updateAlkenePanel(alkeneKeys);
+    console.log('renderAlkeneView completed successfully');
+  } catch (error) {
+    console.error('Error in renderAlkeneView:', error);
+  }
+}
+
+/**
+ * Get current alkene keys based on selection
+ */
+function getCurrentAlkeneKeys() {
+  if (alkeneComparisonSet === 'custom') {
+    return alkeneCustomSelection;
+  }
+  const set = COMPARISON_SETS[alkeneComparisonSet];
+  return set ? set.alkenes : [];
+}
+
+/**
+ * Update alkene analysis panel
+ */
+function updateAlkenePanel(alkeneKeys) {
+  const ranking = getStabilityRanking(alkeneKeys);
+
+  // Update ranking list
+  const rankingList = document.getElementById('alkene-ranking-list');
+  rankingList.innerHTML = '';
+
+  if (ranking.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'empty-message';
+    li.textContent = 'Select alkenes to compare';
+    rankingList.appendChild(li);
+    return;
+  }
+
+  ranking.forEach((alkene, index) => {
+    const li = document.createElement('li');
+    li.textContent = `${alkene.name} (${alkene.deltaH} kcal/mol)`;
+    if (index === 0) li.classList.add('most-stable');
+    if (index === ranking.length - 1) li.classList.add('least-stable');
+    rankingList.appendChild(li);
+  });
+
+  // Update info panel
+  const mostStable = ranking[0];
+  const leastStable = ranking[ranking.length - 1];
+
+  document.getElementById('alkene-most-stable').textContent = mostStable.name;
+  document.getElementById('alkene-most-stable-dh').textContent = `${mostStable.deltaH} kcal/mol`;
+  document.getElementById('alkene-least-stable').textContent = leastStable.name;
+  document.getElementById('alkene-least-stable-dh').textContent = `${leastStable.deltaH} kcal/mol`;
+
+  const diff = Math.abs(mostStable.deltaH - leastStable.deltaH);
+  document.getElementById('alkene-diff').textContent = `${diff.toFixed(1)} kcal/mol`;
+}
+
+/**
+ * Handle alkene comparison set change
+ */
+function handleAlkeneComparisonChange(e) {
+  alkeneComparisonSet = e.target.value;
+
+  // Show/hide custom selection
+  const customSelect = document.getElementById('alkene-custom-select');
+  customSelect.classList.toggle('hidden', alkeneComparisonSet !== 'custom');
+
+  if (alkeneComparisonSet !== 'custom') {
+    renderAlkeneView();
+  }
+}
+
+/**
+ * Handle alkene view toggle (bar chart vs energy diagram)
+ */
+function handleAlkeneViewToggle(e) {
+  const view = e.target.dataset.view;
+  if (view === alkeneViewMode) return;
+
+  alkeneViewMode = view;
+
+  document.querySelectorAll('.alkene-view-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === view);
+  });
+
+  renderAlkeneView();
+}
+
+/**
+ * Handle alkene highlight toggle
+ */
+function handleAlkeneHighlightToggle(e) {
+  alkeneHighlightMost = e.target.checked;
+  renderAlkeneView();
+}
+
+/**
+ * Handle custom alkene selection change
+ */
+function handleAlkeneCustomSelectionChange() {
+  alkeneCustomSelection = [];
+  document.querySelectorAll('.alkene-checkboxes input:checked').forEach(checkbox => {
+    alkeneCustomSelection.push(checkbox.value);
+  });
+
+  if (alkeneComparisonSet === 'custom') {
+    renderAlkeneView();
+  }
+}
+
+/**
+ * Toggle alkene quiz mode
+ */
+function toggleAlkeneQuizMode() {
+  alkeneQuizActive = !alkeneQuizActive;
+
+  const quizBtn = document.getElementById('alkene-quiz-mode-btn');
+  const quizPanel = document.getElementById('alkene-quiz-panel');
+  const infoPanel = document.getElementById('alkene-info');
+  const explanationPanel = document.getElementById('alkene-explanation');
+
+  if (alkeneQuizActive) {
+    quizBtn.classList.add('active');
+    quizPanel.classList.remove('hidden');
+    infoPanel.classList.add('hidden');
+    explanationPanel.classList.add('hidden');
+    handleAlkeneNewQuestion();
+  } else {
+    quizBtn.classList.remove('active');
+    quizPanel.classList.add('hidden');
+    infoPanel.classList.remove('hidden');
+    explanationPanel.classList.remove('hidden');
+    renderAlkeneView();
+  }
+}
+
+/**
+ * Generate new alkene quiz question
+ */
+function handleAlkeneNewQuestion() {
+  currentAlkeneQuestion = generateAlkeneQuestion();
+  selectedAlkeneAnswer = null;
+
+  // Update question display
+  document.getElementById('alkene-quiz-question').textContent = currentAlkeneQuestion.question;
+
+  // Build options
+  const optionsContainer = document.getElementById('alkene-quiz-options');
+  optionsContainer.innerHTML = '';
+
+  currentAlkeneQuestion.options.forEach(option => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option-btn';
+    btn.dataset.value = option.value;
+    btn.textContent = option.label;
+    btn.addEventListener('click', () => selectAlkeneAnswer(option.value));
+    optionsContainer.appendChild(btn);
+  });
+
+  // Hide feedback
+  document.getElementById('alkene-quiz-feedback').classList.add('hidden');
+
+  // Disable submit until answer selected
+  document.getElementById('alkene-submit-btn').disabled = true;
+
+  // Render diagram for question if applicable
+  if (currentAlkeneQuestion.alkenes) {
+    renderAlkeneComparison(document.getElementById('chair-svg'), currentAlkeneQuestion.alkenes, { highlightMostStable: false });
+  }
+}
+
+/**
+ * Select alkene quiz answer
+ */
+function selectAlkeneAnswer(value) {
+  selectedAlkeneAnswer = value;
+
+  document.querySelectorAll('#alkene-quiz-options .quiz-option-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.value === value);
+  });
+
+  document.getElementById('alkene-submit-btn').disabled = false;
+}
+
+/**
+ * Submit alkene quiz answer
+ */
+function handleAlkeneSubmitAnswer() {
+  if (!selectedAlkeneAnswer || !currentAlkeneQuestion) return;
+
+  const result = checkAlkeneAnswer(selectedAlkeneAnswer, currentAlkeneQuestion);
+
+  // Update score
+  alkeneQuizScore.total++;
+  if (result.isCorrect) alkeneQuizScore.correct++;
+
+  // Show feedback
+  const feedbackDiv = document.getElementById('alkene-quiz-feedback');
+  feedbackDiv.classList.remove('hidden');
+
+  if (result.isCorrect) {
+    feedbackDiv.className = 'quiz-feedback correct';
+    feedbackDiv.innerHTML = `<strong>Correct!</strong> ${result.explanation}`;
+  } else {
+    const correctLabel = currentAlkeneQuestion.options.find(o => o.value === result.correctAnswer)?.label || result.correctAnswer;
+    feedbackDiv.className = 'quiz-feedback incorrect';
+    feedbackDiv.innerHTML = `<strong>Incorrect.</strong> The answer is ${correctLabel}. ${result.explanation}`;
+  }
+
+  // Update score display
+  document.getElementById('alkene-quiz-score').textContent = `${alkeneQuizScore.correct}/${alkeneQuizScore.total}`;
+
+  // Highlight correct/incorrect answers
+  document.querySelectorAll('#alkene-quiz-options .quiz-option-btn').forEach(btn => {
+    if (btn.dataset.value === result.correctAnswer) {
+      btn.classList.add('correct');
+    } else if (btn.dataset.value === selectedAlkeneAnswer && !result.isCorrect) {
+      btn.classList.add('incorrect');
+    }
+    btn.disabled = true;
+  });
+
+  document.getElementById('alkene-submit-btn').disabled = true;
+}
+
+// ============== Stereochemistry Tracker Functions ==============
+
+/**
+ * Render stereochemistry view
+ */
+function renderStereoView() {
+  console.log('renderStereoView called, mode:', stereoMode);
+  const svg = document.getElementById('chair-svg');
+
+  try {
+    switch (stereoMode) {
+      case 'sn2':
+        renderSN2Mechanism(svg, stereoStartConfig);
+        updateStereoPanel('sn2');
+        break;
+      case 'sn1':
+        renderSN1Mechanism(svg, stereoStartConfig);
+        updateStereoPanel('sn1');
+        break;
+      case 'enantiomers':
+        renderRelationshipDiagram(svg, 'enantiomers');
+        updateStereoPanel('enantiomers');
+        break;
+      case 'diastereomers':
+        renderRelationshipDiagram(svg, 'diastereomers');
+        updateStereoPanel('diastereomers');
+        break;
+    }
+    console.log('renderStereoView completed successfully');
+  } catch (error) {
+    console.error('Error in renderStereoView:', error);
+  }
+}
+
+/**
+ * Update stereochemistry panel
+ */
+function updateStereoPanel(mode) {
+  const startConfig = document.getElementById('stereo-start-config');
+  const endConfig = document.getElementById('stereo-end-config');
+  const result = document.getElementById('stereo-result');
+  const explanationList = document.getElementById('stereo-explanation-list');
+
+  // Clear previous
+  startConfig.className = 'config-badge';
+  endConfig.className = 'config-badge';
+
+  if (mode === 'sn2') {
+    const endConfigValue = stereoStartConfig === 'R' ? 'S' : 'R';
+    startConfig.textContent = `(${stereoStartConfig})`;
+    startConfig.classList.add(stereoStartConfig);
+    endConfig.textContent = `(${endConfigValue})`;
+    endConfig.classList.add(endConfigValue);
+    result.textContent = 'Complete Inversion';
+
+    explanationList.innerHTML = `
+      <li><strong>Walden Inversion:</strong> (${stereoStartConfig}) → (${endConfigValue})</li>
+      <li>Backside attack (180° from leaving group)</li>
+      <li>Concerted mechanism - no intermediate</li>
+      <li>Product is optically active</li>
+    `;
+  } else if (mode === 'sn1') {
+    startConfig.textContent = `(${stereoStartConfig})`;
+    startConfig.classList.add(stereoStartConfig);
+    endConfig.textContent = 'Racemic';
+    endConfig.classList.add('racemic');
+    result.textContent = '50% R + 50% S';
+
+    explanationList.innerHTML = `
+      <li><strong>Racemization:</strong> Planar carbocation intermediate</li>
+      <li>Nucleophile attacks from both faces equally</li>
+      <li>50% retention + 50% inversion</li>
+      <li>Product is NOT optically active</li>
+    `;
+  } else if (mode === 'enantiomers') {
+    startConfig.textContent = '(R)';
+    startConfig.classList.add('R');
+    endConfig.textContent = '(S)';
+    endConfig.classList.add('S');
+    result.textContent = 'Mirror Images';
+
+    explanationList.innerHTML = `
+      <li><strong>Enantiomers:</strong> Non-superimposable mirror images</li>
+      <li>Opposite configuration at ALL stereocenters</li>
+      <li>Same physical properties (mp, bp, solubility)</li>
+      <li>Opposite optical rotation (+/−)</li>
+      <li>Same reactivity with achiral reagents</li>
+    `;
+  } else if (mode === 'diastereomers') {
+    startConfig.textContent = '(R,R)';
+    startConfig.classList.add('R');
+    endConfig.textContent = '(R,S)';
+    endConfig.classList.add('racemic');
+    result.textContent = 'Not Mirror Images';
+
+    explanationList.innerHTML = `
+      <li><strong>Diastereomers:</strong> NOT mirror images</li>
+      <li>Different configuration at SOME stereocenters</li>
+      <li>Different physical properties</li>
+      <li>Different reactivity</li>
+      <li>One may be meso (achiral despite stereocenters)</li>
+    `;
+  }
+}
+
+/**
+ * Handle stereo mode change
+ */
+function handleStereoModeChange(e) {
+  stereoMode = e.target.value;
+
+  // Show/hide relevant controls
+  const moleculeRow = document.getElementById('stereo-molecule-row');
+  const configRow = document.getElementById('stereo-config-row');
+
+  if (stereoMode === 'sn2' || stereoMode === 'sn1') {
+    moleculeRow.classList.remove('hidden');
+    configRow.classList.remove('hidden');
+  } else {
+    moleculeRow.classList.add('hidden');
+    configRow.classList.add('hidden');
+  }
+
+  renderStereoView();
+}
+
+/**
+ * Handle stereo molecule change
+ */
+function handleStereoMoleculeChange(e) {
+  stereoMolecule = e.target.value;
+
+  // Update config based on molecule
+  if (stereoMolecule.includes('-r')) {
+    stereoStartConfig = 'R';
+  } else if (stereoMolecule.includes('-s')) {
+    stereoStartConfig = 'S';
+  }
+
+  // Update config buttons
+  document.querySelectorAll('.config-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.config === stereoStartConfig);
+  });
+
+  renderStereoView();
+}
+
+/**
+ * Handle config toggle
+ */
+function handleConfigToggle(e) {
+  const config = e.target.dataset.config;
+  if (!config) return;
+
+  stereoStartConfig = config;
+
+  document.querySelectorAll('.config-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.config === config);
+  });
+
+  renderStereoView();
+}
+
+/**
+ * Toggle stereo quiz mode
+ */
+function toggleStereoQuizMode() {
+  stereoQuizActive = !stereoQuizActive;
+
+  const quizBtn = document.getElementById('stereo-quiz-mode-btn');
+  const quizPanel = document.getElementById('stereo-quiz-panel');
+  const outcomePanel = document.getElementById('stereo-outcome');
+  const explanationPanel = document.getElementById('stereo-explanation');
+
+  if (stereoQuizActive) {
+    quizBtn.classList.add('active');
+    quizPanel.classList.remove('hidden');
+    outcomePanel.classList.add('hidden');
+    explanationPanel.classList.add('hidden');
+    handleStereoNewQuestion();
+  } else {
+    quizBtn.classList.remove('active');
+    quizPanel.classList.add('hidden');
+    outcomePanel.classList.remove('hidden');
+    explanationPanel.classList.remove('hidden');
+    renderStereoView();
+  }
+}
+
+/**
+ * Generate new stereo quiz question
+ */
+function handleStereoNewQuestion() {
+  currentStereoQuestion = generateStereoQuestion();
+  selectedStereoAnswer = null;
+
+  // Update question display
+  document.getElementById('stereo-quiz-question').textContent = currentStereoQuestion.question;
+
+  // Build options
+  const optionsContainer = document.getElementById('stereo-quiz-options');
+  optionsContainer.innerHTML = '';
+
+  currentStereoQuestion.options.forEach(option => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option-btn';
+    btn.dataset.value = option.value;
+    btn.textContent = option.label;
+    btn.addEventListener('click', () => selectStereoAnswer(option.value));
+    optionsContainer.appendChild(btn);
+  });
+
+  // Hide feedback
+  document.getElementById('stereo-quiz-feedback').classList.add('hidden');
+
+  // Disable submit until answer selected
+  document.getElementById('stereo-submit-btn').disabled = true;
+}
+
+/**
+ * Select stereo quiz answer
+ */
+function selectStereoAnswer(value) {
+  selectedStereoAnswer = value;
+
+  document.querySelectorAll('#stereo-quiz-options .quiz-option-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.value === value);
+  });
+
+  document.getElementById('stereo-submit-btn').disabled = false;
+}
+
+/**
+ * Submit stereo quiz answer
+ */
+function handleStereoSubmitAnswer() {
+  if (!selectedStereoAnswer || !currentStereoQuestion) return;
+
+  const result = checkStereoAnswer(selectedStereoAnswer, currentStereoQuestion);
+
+  // Update score
+  stereoQuizScore.total++;
+  if (result.isCorrect) stereoQuizScore.correct++;
+
+  // Show feedback
+  const feedbackDiv = document.getElementById('stereo-quiz-feedback');
+  feedbackDiv.classList.remove('hidden');
+
+  if (result.isCorrect) {
+    feedbackDiv.className = 'quiz-feedback correct';
+    feedbackDiv.innerHTML = `<strong>Correct!</strong> ${result.explanation}`;
+  } else {
+    const correctLabel = currentStereoQuestion.options.find(o => o.value === result.correctAnswer)?.label || result.correctAnswer;
+    feedbackDiv.className = 'quiz-feedback incorrect';
+    feedbackDiv.innerHTML = `<strong>Incorrect.</strong> The answer is ${correctLabel}. ${result.explanation}`;
+  }
+
+  // Update score display
+  document.getElementById('stereo-quiz-score').textContent = `${stereoQuizScore.correct}/${stereoQuizScore.total}`;
+
+  // Highlight correct/incorrect answers
+  document.querySelectorAll('#stereo-quiz-options .quiz-option-btn').forEach(btn => {
+    if (btn.dataset.value === result.correctAnswer) {
+      btn.classList.add('correct');
+    } else if (btn.dataset.value === selectedStereoAnswer && !result.isCorrect) {
+      btn.classList.add('incorrect');
+    }
+    btn.disabled = true;
+  });
+
+  document.getElementById('stereo-submit-btn').disabled = true;
+}
+
+// ============== Mechanism Animator Functions ==============
+
+/**
+ * Render mechanism view
+ */
+function renderMechanismView() {
+  console.log('renderMechanismView called, type:', mechanismType, 'step:', mechanismStep);
+  const svg = document.getElementById('chair-svg');
+
+  try {
+    renderMechanism(svg, mechanismType, mechanismStep);
+    updateMechanismPanel();
+    updateMechanismStepControls();
+    console.log('renderMechanismView completed successfully');
+  } catch (error) {
+    console.error('Error in renderMechanismView:', error);
+  }
+}
+
+/**
+ * Update mechanism panel
+ */
+function updateMechanismPanel() {
+  const mechanism = getMechanism(mechanismType);
+  if (!mechanism) return;
+
+  // Update mechanism name
+  document.getElementById('mechanism-name-display').textContent = mechanism.name;
+
+  // Update type badge
+  const typeBadge = document.getElementById('mechanism-type-badge');
+  typeBadge.textContent = mechanism.type.charAt(0).toUpperCase() + mechanism.type.slice(1);
+  typeBadge.className = 'mechanism-type-badge ' + mechanism.type;
+
+  // Update step info
+  const stepData = getStepData(mechanismType, mechanismStep);
+  if (stepData) {
+    document.getElementById('mechanism-step-title').textContent = stepData.title;
+    document.getElementById('mechanism-step-description').textContent = stepData.description;
+  }
+
+  // Update key points
+  const pointsList = document.getElementById('mechanism-points-list');
+  pointsList.innerHTML = '';
+  mechanism.keyPoints.forEach(point => {
+    const li = document.createElement('li');
+    li.textContent = point;
+    pointsList.appendChild(li);
+  });
+
+  // Update products
+  const productsList = document.getElementById('mechanism-products-list');
+  productsList.innerHTML = '';
+  mechanism.products.forEach(product => {
+    const span = document.createElement('span');
+    span.className = 'product-item';
+    span.textContent = product;
+    productsList.appendChild(span);
+  });
+}
+
+/**
+ * Update mechanism step navigation controls
+ */
+function updateMechanismStepControls() {
+  const mechanism = getMechanism(mechanismType);
+  if (!mechanism) return;
+
+  const totalSteps = mechanism.steps.length;
+  const prevBtn = document.getElementById('mechanism-prev-btn');
+  const nextBtn = document.getElementById('mechanism-next-btn');
+  const indicator = document.getElementById('mechanism-step-indicator');
+
+  prevBtn.disabled = mechanismStep <= 0;
+  nextBtn.disabled = mechanismStep >= totalSteps - 1;
+  indicator.textContent = `${mechanismStep + 1} / ${totalSteps}`;
+}
+
+/**
+ * Handle mechanism type change
+ */
+function handleMechanismTypeChange(e) {
+  mechanismType = e.target.value;
+  mechanismStep = 0;
+  renderMechanismView();
+}
+
+/**
+ * Handle mechanism previous step
+ */
+function handleMechanismPrevStep() {
+  if (mechanismStep > 0) {
+    mechanismStep--;
+    renderMechanismView();
+  }
+}
+
+/**
+ * Handle mechanism next step
+ */
+function handleMechanismNextStep() {
+  const mechanism = getMechanism(mechanismType);
+  if (mechanism && mechanismStep < mechanism.steps.length - 1) {
+    mechanismStep++;
+    renderMechanismView();
+  }
+}
+
+/**
+ * Handle mechanism arrow toggle
+ */
+function handleMechanismArrowToggle(e) {
+  mechanismShowArrows = e.target.checked;
+  renderMechanismView();
+}
+
+/**
+ * Toggle mechanism quiz mode
+ */
+function toggleMechanismQuizMode() {
+  mechanismQuizActive = !mechanismQuizActive;
+
+  const quizBtn = document.getElementById('mechanism-quiz-mode-btn');
+  const quizPanel = document.getElementById('mechanism-quiz-panel');
+  const infoPanel = document.getElementById('mechanism-info');
+  const stepPanel = document.getElementById('mechanism-step-info');
+  const keyPointsPanel = document.getElementById('mechanism-key-points');
+  const productsPanel = document.getElementById('mechanism-products');
+
+  if (mechanismQuizActive) {
+    quizBtn.classList.add('active');
+    quizPanel.classList.remove('hidden');
+    infoPanel.classList.add('hidden');
+    stepPanel.classList.add('hidden');
+    keyPointsPanel.classList.add('hidden');
+    productsPanel.classList.add('hidden');
+    handleMechanismNewQuestion();
+  } else {
+    quizBtn.classList.remove('active');
+    quizPanel.classList.add('hidden');
+    infoPanel.classList.remove('hidden');
+    stepPanel.classList.remove('hidden');
+    keyPointsPanel.classList.remove('hidden');
+    productsPanel.classList.remove('hidden');
+    renderMechanismView();
+  }
+}
+
+/**
+ * Generate new mechanism quiz question
+ */
+function handleMechanismNewQuestion() {
+  currentMechanismQuestion = generateMechanismQuestion();
+  selectedMechanismAnswer = null;
+
+  // Update question display
+  document.getElementById('mechanism-quiz-question').textContent = currentMechanismQuestion.question;
+
+  // Build options
+  const optionsContainer = document.getElementById('mechanism-quiz-options');
+  optionsContainer.innerHTML = '';
+
+  currentMechanismQuestion.options.forEach(option => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option-btn';
+    btn.dataset.value = option.value;
+    btn.textContent = option.label;
+    btn.addEventListener('click', () => selectMechanismAnswer(option.value));
+    optionsContainer.appendChild(btn);
+  });
+
+  // Hide feedback
+  document.getElementById('mechanism-quiz-feedback').classList.add('hidden');
+
+  // Disable submit until answer selected
+  document.getElementById('mechanism-submit-btn').disabled = true;
+}
+
+/**
+ * Select mechanism quiz answer
+ */
+function selectMechanismAnswer(value) {
+  selectedMechanismAnswer = value;
+
+  document.querySelectorAll('#mechanism-quiz-options .quiz-option-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.value === value);
+  });
+
+  document.getElementById('mechanism-submit-btn').disabled = false;
+}
+
+/**
+ * Submit mechanism quiz answer
+ */
+function handleMechanismSubmitAnswer() {
+  if (!selectedMechanismAnswer || !currentMechanismQuestion) return;
+
+  const result = checkMechanismAnswer(selectedMechanismAnswer, currentMechanismQuestion);
+
+  // Update score
+  mechanismQuizScore.total++;
+  if (result.isCorrect) mechanismQuizScore.correct++;
+
+  // Show feedback
+  const feedbackDiv = document.getElementById('mechanism-quiz-feedback');
+  feedbackDiv.classList.remove('hidden');
+
+  if (result.isCorrect) {
+    feedbackDiv.className = 'quiz-feedback correct';
+    feedbackDiv.innerHTML = `<strong>Correct!</strong> ${result.explanation}`;
+  } else {
+    const correctLabel = currentMechanismQuestion.options.find(o => o.value === result.correctAnswer)?.label || result.correctAnswer;
+    feedbackDiv.className = 'quiz-feedback incorrect';
+    feedbackDiv.innerHTML = `<strong>Incorrect.</strong> The answer is ${correctLabel}. ${result.explanation}`;
+  }
+
+  // Update score display
+  document.getElementById('mechanism-quiz-score').textContent = `${mechanismQuizScore.correct}/${mechanismQuizScore.total}`;
+
+  // Highlight correct/incorrect answers
+  document.querySelectorAll('#mechanism-quiz-options .quiz-option-btn').forEach(btn => {
+    if (btn.dataset.value === result.correctAnswer) {
+      btn.classList.add('correct');
+    } else if (btn.dataset.value === selectedMechanismAnswer && !result.isCorrect) {
+      btn.classList.add('incorrect');
+    }
+    btn.disabled = true;
+  });
+
+  document.getElementById('mechanism-submit-btn').disabled = true;
 }
 
 /**

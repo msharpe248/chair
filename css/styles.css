@@ -2152,3 +2152,651 @@ main {
     background: #999 !important;
   }
 }
+
+/* ======================== */
+/* Alkene Stability Styles  */
+/* ======================== */
+
+/* Alkene controls */
+.alkene-custom-select {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--background);
+  border-radius: 6px;
+}
+
+.alkene-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.alkene-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  min-width: unset;
+}
+
+.alkene-checkboxes input {
+  margin: 0;
+}
+
+.alkene-view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.alkene-view-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border: 2px solid var(--border-color);
+  background: var(--surface);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.alkene-view-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.alkene-view-btn.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+/* Alkene panel styles */
+.alkene-ranking {
+  margin-bottom: 1rem;
+}
+
+.alkene-ranking h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.ranking-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.alkene-ranking-list {
+  padding-left: 1.25rem;
+  margin: 0;
+}
+
+.alkene-ranking-list li {
+  padding: 0.375rem 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.alkene-ranking-list li:last-child {
+  border-bottom: none;
+}
+
+.alkene-ranking-list li.most-stable {
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+.alkene-ranking-list li.least-stable {
+  color: var(--error-color);
+}
+
+.alkene-info {
+  background: var(--background);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.alkene-info h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.alkene-info .info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.375rem 0;
+  font-size: 0.8rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.alkene-info .info-row:last-child {
+  border-bottom: none;
+}
+
+.alkene-info .info-row.highlight {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.alkene-explanation {
+  margin-bottom: 1rem;
+}
+
+.alkene-explanation h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.alkene-explanation .explanation-list {
+  padding-left: 1.25rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.alkene-explanation .explanation-list li {
+  margin-bottom: 0.375rem;
+}
+
+/* Alkene SVG styles */
+.alkene-title {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+
+.alkene-axis {
+  stroke: var(--text-secondary);
+  stroke-width: 1.5;
+}
+
+.alkene-tick {
+  stroke: var(--text-secondary);
+  stroke-width: 1;
+}
+
+.axis-label {
+  font-size: 11px;
+  fill: var(--text-secondary);
+}
+
+.tick-label {
+  font-size: 9px;
+  fill: var(--text-muted);
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.alkene-bar {
+  transition: all 0.3s ease;
+}
+
+.alkene-bar:hover {
+  opacity: 0.8;
+}
+
+.alkene-value {
+  font-size: 10px;
+  fill: var(--text-primary);
+  font-weight: 600;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.alkene-name {
+  font-size: 10px;
+  fill: var(--text-primary);
+  font-weight: 500;
+}
+
+.alkene-baseline {
+  stroke: var(--border-color);
+  stroke-width: 1;
+}
+
+.legend-title {
+  font-size: 10px;
+  fill: var(--text-secondary);
+  font-weight: 600;
+}
+
+.legend-label {
+  font-size: 9px;
+  fill: var(--text-secondary);
+}
+
+.stability-arrow {
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+}
+
+.stability-arrow-head {
+  fill: var(--text-secondary);
+}
+
+.stability-label {
+  font-size: 9px;
+  fill: var(--text-secondary);
+}
+
+.double-bond {
+  stroke: var(--bond-color);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.carbon-atom {
+  font-size: 18px;
+  font-weight: 700;
+  fill: var(--text-primary);
+}
+
+.alkene-formula {
+  font-size: 12px;
+  fill: var(--text-secondary);
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.info-label {
+  font-size: 12px;
+  fill: var(--text-secondary);
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--primary-color);
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.stability-text {
+  font-size: 11px;
+  font-weight: 600;
+  fill: white;
+}
+
+.stereo-label {
+  font-size: 11px;
+  fill: var(--text-secondary);
+}
+
+.delta-h-label {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.energy-level {
+  stroke: var(--text-primary);
+}
+
+.energy-label {
+  font-size: 10px;
+  fill: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Alkene-only visibility */
+.alkene-only {
+  display: none;
+}
+
+/* ============================== */
+/* Stereochemistry Tracker Styles */
+/* ============================== */
+
+/* Config toggle buttons */
+.config-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.config-btn {
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--border-color);
+  background: var(--surface);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.config-btn:hover {
+  border-color: var(--primary-color);
+}
+
+.config-btn.selected {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.config-btn[data-config="R"].selected {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.config-btn[data-config="S"].selected {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+/* Stereo panel */
+.stereo-outcome {
+  margin-bottom: 1rem;
+}
+
+.stereo-outcome h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.outcome-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.outcome-row:last-child {
+  border-bottom: none;
+}
+
+.outcome-row.highlight {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.config-badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.config-badge.R {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.config-badge.S {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.config-badge.racemic {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.stereo-explanation {
+  background: var(--background);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stereo-explanation h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.stereo-explanation .explanation-list {
+  padding-left: 1.25rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.stereo-explanation .explanation-list li {
+  margin-bottom: 0.375rem;
+}
+
+/* Stereo SVG styles */
+.stereo-title {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+
+.wedge-bond {
+  fill: var(--bond-color);
+}
+
+.dash-bond {
+  stroke: var(--bond-color);
+  stroke-width: 2;
+}
+
+.stereo-label {
+  font-size: 12px;
+  fill: var(--text-primary);
+}
+
+.config-label-R {
+  fill: #2563eb;
+  font-weight: 700;
+}
+
+.config-label-S {
+  fill: #dc2626;
+  font-weight: 700;
+}
+
+/* Stereo-only visibility */
+.stereo-only {
+  display: none;
+}
+
+/* ============================== */
+/* Mechanism Animator Styles */
+/* ============================== */
+
+/* Step navigation */
+.mechanism-step-controls {
+  margin-top: 0.5rem;
+}
+
+.step-navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.step-btn {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--border-color);
+  background: var(--surface);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.step-btn:hover:not(:disabled) {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.step-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+#mechanism-step-indicator {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Mechanism panel */
+.mechanism-info {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.mechanism-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.mechanism-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.mechanism-type-badge.substitution {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.mechanism-type-badge.elimination {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.mechanism-type-badge.addition {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.mechanism-step-info {
+  margin-bottom: 1rem;
+}
+
+.mechanism-step-info h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.step-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.step-description {
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.mechanism-key-points {
+  background: var(--background);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.mechanism-key-points h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.mechanism-key-points .explanation-list {
+  padding-left: 1.25rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.mechanism-key-points .explanation-list li {
+  margin-bottom: 0.375rem;
+}
+
+.mechanism-products {
+  margin-bottom: 1rem;
+}
+
+.mechanism-products h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.products-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.product-item {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  background: var(--background);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+/* Mechanism-only visibility */
+.mechanism-only {
+  display: none;
+}
+
+/* SVG styles for mechanism diagrams */
+.mechanism-arrow {
+  stroke: #dc2626;
+  stroke-width: 2.5;
+  fill: none;
+}
+
+.mechanism-bond {
+  stroke: #334155;
+  stroke-width: 2;
+}
+
+.mechanism-carbon {
+  fill: #1e293b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mechanism-label {
+  font-size: 10px;
+  fill: #334155;
+}
+
+.mechanism-nucleophile {
+  fill: #059669;
+}
+
+.mechanism-leaving-group {
+  fill: #dc2626;
+}
+
+.mechanism-intermediate {
+  fill: #f59e0b;
+}
