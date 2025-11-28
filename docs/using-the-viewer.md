@@ -176,11 +176,16 @@ Exported images include:
 Test your understanding with randomized problems:
 
 1. Click **Quiz Mode** button in the header
-2. Select difficulty: **Easy**, **Medium**, or **Hard**
-3. Click **New Question** to get a problem
-4. The viewer shows a random molecule configuration
-5. Answer the multiple-choice question
-6. Click **Submit** to check your answer
+2. The quiz panel appears in the right sidebar
+3. Select difficulty: **Easy**, **Medium**, or **Hard**
+4. Click **New Question** to get a problem
+5. The viewer shows a random molecule configuration
+6. **Interact with the viewer** - zoom, rotate, ring flip to analyze the molecule
+7. Answer the multiple-choice question
+8. Click **Submit** to check your answer
+9. Click **Exit Quiz** to close the quiz panel
+
+> **Tip**: Unlike a popup dialog, the quiz panel lets you fully interact with the chair viewer while answering questions. Use the Ring Flip button to compare conformers!
 
 #### Question Types
 
