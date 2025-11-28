@@ -1,60 +1,65 @@
-# Chair Conformation Viewer - Documentation
+# Organic Chemistry Visualization Suite
 
-Welcome to the documentation for the Chair Conformation Viewer, an interactive tool for visualizing and understanding cyclohexane chair conformations.
+Welcome to the documentation for this interactive suite of tools for visualizing and understanding organic chemistry concepts.
 
-## Contents
+## Available Viewers
 
+### Chair Conformation Viewer
+Visualize and analyze cyclohexane chair conformations, including:
+- Interactive substituent placement with real-time energy calculations
+- Pyranose sugars (glucose, galactose, mannose, etc.)
+- Decalin fused ring systems
+- Newman projections
+- Quiz mode for practice
+
+### Reaction Energy Diagram Viewer
+Understand reaction mechanisms and thermodynamics:
+- Predict mechanisms (SN1, SN2, E1, E2) from reaction conditions
+- Analyze reactions from SMILES structures
+- Compare competing mechanisms with overlaid energy curves
+- Quiz mode to test your understanding
+
+## Documentation Contents
+
+### Chair Conformation Viewer
 1. [Chair Conformation Theory](theory.md) - The organic chemistry behind chair conformations
-2. [Using the Viewer](using-the-viewer.md) - How to use this tool effectively
+2. [Using the Chair Viewer](using-the-viewer.md) - How to use this tool effectively
 3. [Pyranose Sugars](sugars.md) - Understanding carbohydrate chair conformations
 4. [Decalin & Fused Rings](decalin.md) - Bicyclic systems and their conformations
 
-## What is This Tool?
+### Reaction Energy Diagram Viewer
+1. [Reaction Energy Theory](energy-theory.md) - Understanding energy diagrams and mechanism prediction
+2. [Using the Energy Viewer](energy-viewer.md) - Guide to all features of the energy diagram viewer
 
-This viewer helps students and educators visualize **chair conformations** of six-membered rings. Chair conformations are fundamental to understanding:
+## Why These Tools?
 
-- Conformational analysis in organic chemistry
-- Stereochemistry of cyclohexane derivatives
-- Carbohydrate chemistry (sugars)
-- Steroid and terpene structures
-- Drug molecule conformations
+In organic chemistry, understanding molecular structure and reactivity is fundamental:
 
-## Why Chair Conformations Matter
+**Chair Conformations** determine:
+- Molecular stability based on substituent positions
+- Stereochemical outcomes of reactions
+- Biological activity of drugs and natural products
 
-In organic chemistry, the three-dimensional shape of molecules determines their:
-
-- **Reactivity** - Which atoms are accessible for reactions
-- **Stability** - Which conformations are lower in energy
-- **Biological activity** - How molecules interact with enzymes and receptors
-
-The chair conformation is the most stable form of cyclohexane and its derivatives. Understanding how substituents prefer axial or equatorial positions is essential for predicting molecular behavior.
+**Reaction Energy Diagrams** explain:
+- Why certain mechanisms are favored over others
+- How reaction conditions affect mechanism choice
+- The relationship between activation energy and reaction rate
 
 ## Quick Start
 
-1. **Cyclohexane Mode**: Click on any carbon to add substituents. See how the energy changes based on axial vs. equatorial placement.
-
-2. **Sugar Mode**: Explore common monosaccharides like glucose and galactose. Toggle between α and β anomers.
-
-3. **Decalin Mode**: Compare cis and trans fused ring systems.
-
-## Features
-
-- Interactive substituent placement
-- Real-time energy calculations using A-values
-- Ring flip visualization
-- Axial/equatorial position labels
-- Zoom and pan controls
-- Support for pyranose sugars and decalin
+1. Use the **dropdown menu** in the header to switch between viewers
+2. Select a **mode** (Conditions, SMILES, Preset, or use the Quiz button)
+3. Interact with the controls to explore different scenarios
+4. Use the **? Help** link to access this documentation
 
 ## Educational Use
 
-This tool is designed to help with:
-
-- Verifying answers to conformational analysis problems
-- Understanding 1,3-diaxial interactions
-- Visualizing the anomeric effect in sugars
-- Comparing conformational isomers
+These tools are designed to help with:
+- Visualizing abstract organic chemistry concepts
+- Verifying answers to homework problems
+- Understanding why certain reactions proceed as they do
+- Practicing mechanism prediction and identification
 
 ---
 
-*Continue to [Chair Conformation Theory](theory.md) →*
+*Continue to [Chair Conformation Theory](theory.md) or [Reaction Energy Theory](energy-theory.md) →*
