@@ -61,6 +61,9 @@ let currentQuestion = null;
 let selectedAnswer = null;
 let quizScore = { correct: 0, total: 0 };
 
+// Theme state
+let currentTheme = localStorage.getItem('theme') || 'auto';
+
 // Preset definitions for cyclohexane examples
 const PRESETS = {
   // Single substituent
@@ -314,6 +317,12 @@ function setupEventListeners() {
       closeQuizModal();
     }
   });
+
+  // Theme toggle
+  document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+
+  // Initialize theme
+  initTheme();
 }
 
 /**
@@ -1214,6 +1223,51 @@ function downloadFile(url, filename) {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+// ============== Theme Functions ==============
+
+/**
+ * Initialize theme based on saved preference or system preference
+ */
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme');
+
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else if (savedTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+  // If no saved preference, let CSS handle system preference
+}
+
+/**
+ * Toggle between light and dark theme
+ */
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  let newTheme;
+
+  if (currentTheme === 'dark') {
+    // Dark -> Light
+    newTheme = 'light';
+  } else if (currentTheme === 'light') {
+    // Light -> Auto (remove attribute)
+    newTheme = null;
+  } else {
+    // Auto -> opposite of system preference
+    newTheme = prefersDark ? 'light' : 'dark';
+  }
+
+  if (newTheme) {
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.removeItem('theme');
+  }
 }
 
 // Initialize when DOM is ready

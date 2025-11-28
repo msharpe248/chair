@@ -6,16 +6,59 @@
   --secondary-color: #64748b;
   --background: #f8fafc;
   --surface: #ffffff;
+  --surface-hover: #f1f5f9;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
+  --text-muted: #94a3b8;
   --border-color: #e2e8f0;
   --success-color: #22c55e;
   --warning-color: #f59e0b;
+  --error-color: #dc2626;
   --bond-color: #334155;
   --carbon-fill: #f1f5f9;
   --carbon-stroke: #334155;
   --hydrogen-color: #94a3b8;
   --substituent-color: #dc2626;
+}
+
+/* Dark Mode */
+[data-theme="dark"] {
+  --primary-color: #3b82f6;
+  --primary-hover: #60a5fa;
+  --secondary-color: #94a3b8;
+  --background: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: #334155;
+  --bond-color: #cbd5e1;
+  --carbon-fill: #334155;
+  --carbon-stroke: #cbd5e1;
+  --hydrogen-color: #64748b;
+  --substituent-color: #f87171;
+}
+
+/* Auto dark mode based on system preference */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --primary-color: #3b82f6;
+    --primary-hover: #60a5fa;
+    --secondary-color: #94a3b8;
+    --background: #0f172a;
+    --surface: #1e293b;
+    --surface-hover: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border-color: #334155;
+    --bond-color: #cbd5e1;
+    --carbon-fill: #334155;
+    --carbon-stroke: #cbd5e1;
+    --hydrogen-color: #64748b;
+    --substituent-color: #f87171;
+  }
 }
 
 * {
@@ -463,13 +506,15 @@ main {
 }
 
 .carbon-circle:hover {
-  fill: #dbeafe;
+  fill: var(--primary-color);
+  fill-opacity: 0.2;
   stroke: var(--primary-color);
   stroke-width: 2.5;
 }
 
 .carbon-circle.highlighted {
-  fill: #bfdbfe;
+  fill: var(--primary-color);
+  fill-opacity: 0.3;
   stroke: var(--primary-color);
   stroke-width: 3;
 }
@@ -797,8 +842,9 @@ main {
 }
 
 .carbon-circle.bridgehead {
-  fill: #fef3c7;
-  stroke: #d97706;
+  fill: var(--warning-color);
+  fill-opacity: 0.3;
+  stroke: var(--warning-color);
   stroke-width: 2.5;
 }
 
@@ -1169,5 +1215,148 @@ main {
 
   .controls {
     justify-content: center;
+  }
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary-color);
+}
+
+.theme-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* Show sun in dark mode, moon in light mode */
+.theme-icon.dark {
+  display: inline;
+}
+
+.theme-icon.light {
+  display: none;
+}
+
+[data-theme="dark"] .theme-icon.dark {
+  display: none;
+}
+
+[data-theme="dark"] .theme-icon.light {
+  display: inline;
+}
+
+/* Handle system preference */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-icon.dark {
+    display: none;
+  }
+  :root:not([data-theme="light"]) .theme-icon.light {
+    display: inline;
+  }
+}
+
+/* Print Styles */
+@media print {
+  /* Hide non-essential elements */
+  header,
+  .controls,
+  .canvas-controls,
+  .mode-controls,
+  .quiz-modal,
+  .picker-modal,
+  .theme-toggle,
+  .help-link,
+  .quiz-btn {
+    display: none !important;
+  }
+
+  /* Full width layout */
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  main {
+    display: block !important;
+    padding: 0 !important;
+  }
+
+  .viewer-section {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .chair-container {
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  .info-panel {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #ccc !important;
+    background: white !important;
+    margin-top: 1rem;
+  }
+
+  /* Ensure SVG prints well */
+  #chair-svg {
+    transform: none !important;
+  }
+
+  .svg-wrapper {
+    transform: none !important;
+  }
+
+  /* High contrast for print */
+  .carbon-bond {
+    stroke: black !important;
+  }
+
+  .carbon-circle {
+    fill: white !important;
+    stroke: black !important;
+  }
+
+  .carbon-label {
+    fill: black !important;
+  }
+
+  .explicit-label {
+    fill: #333 !important;
+  }
+
+  .hydrogen-bond {
+    stroke: #666 !important;
+  }
+
+  /* Energy panel print styles */
+  .energy-display {
+    background: white !important;
+    border: 1px solid #ccc !important;
+  }
+
+  .energy-bar.current {
+    background: #666 !important;
+  }
+
+  .energy-bar.flipped {
+    background: #999 !important;
   }
 }

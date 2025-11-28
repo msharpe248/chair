@@ -10,12 +10,12 @@
 - [x] Practice Quiz Mode - Random problems to test understanding
 - [x] Energy Diagram - Visual bar chart comparing conformer energies
 - [x] SMILES Input - Enter a SMILES string to generate the chair
+- [x] Dark Mode - For late-night studying
+- [x] Print-Friendly View - Clean output for worksheets
 
 ## Pending
 
 ### Medium Priority
-- [ ] Dark Mode - For late-night studying
-- [ ] Print-Friendly View - Clean output for worksheets
 
 ### Nice to Have
 - [ ] Comparison Mode - Show two conformers side-by-side
