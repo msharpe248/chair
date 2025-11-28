@@ -15,6 +15,7 @@
       <button class="mode-btn" data-mode="decalin">Decalin</button>
     </nav>
     <a href="docs/index.html" class="help-link" title="Documentation">? Help</a>
+    <button id="quiz-mode-btn" class="quiz-btn">Quiz Mode</button>
   </header>
 
   <main>
@@ -99,8 +100,10 @@
         </div>
       </div>
 
-      <div class="chair-container">
-        <svg id="chair-svg" viewBox="0 0 400 350"></svg>
+      <div class="chair-container" id="chair-container">
+        <div class="svg-wrapper" id="svg-wrapper">
+          <svg id="chair-svg" viewBox="0 0 400 350"></svg>
+        </div>
       </div>
       <div class="canvas-controls">
         <div class="zoom-controls">
@@ -108,6 +111,15 @@
           <span id="zoom-level">100%</span>
           <button id="zoom-in-btn" title="Zoom In">+</button>
           <button id="zoom-reset-btn" title="Reset Zoom">↺</button>
+        </div>
+        <div class="rotation-controls">
+          <label class="checkbox-label">
+            <input type="checkbox" id="enable-3d">
+            3D
+          </label>
+          <input type="range" id="rotate-x" min="-60" max="60" value="0" class="rotation-slider hidden" title="Rotate X">
+          <input type="range" id="rotate-y" min="-60" max="60" value="0" class="rotation-slider hidden" title="Rotate Y">
+          <button id="reset-rotation-btn" class="hidden" title="Reset Rotation">↺</button>
         </div>
         <div class="export-controls">
           <button id="export-png-btn" title="Export as PNG">📷 PNG</button>
@@ -200,6 +212,33 @@
         <button id="add-substituent-btn">Add</button>
         <button id="remove-substituent-btn">Remove</button>
         <button id="cancel-picker-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz Modal -->
+  <div id="quiz-modal" class="quiz-modal hidden">
+    <div class="quiz-content">
+      <div class="quiz-header">
+        <h3>Practice Quiz</h3>
+        <div class="quiz-score">Score: <span id="quiz-score">0/0</span></div>
+        <button id="close-quiz-btn" class="close-btn">&times;</button>
+      </div>
+      <div class="quiz-difficulty">
+        <label>Difficulty:</label>
+        <button class="difficulty-btn selected" data-level="1">Easy</button>
+        <button class="difficulty-btn" data-level="2">Medium</button>
+        <button class="difficulty-btn" data-level="3">Hard</button>
+      </div>
+      <div class="quiz-question-area">
+        <p id="quiz-question" class="quiz-question">Click "New Question" to start!</p>
+        <div id="quiz-options" class="quiz-options"></div>
+        <div id="quiz-feedback" class="quiz-feedback hidden"></div>
+      </div>
+      <div class="quiz-actions">
+        <button id="new-question-btn" class="primary-btn">New Question</button>
+        <button id="submit-answer-btn" class="primary-btn" disabled>Submit</button>
+        <button id="reset-quiz-btn" class="secondary-btn">Reset Score</button>
       </div>
     </div>
   </div>

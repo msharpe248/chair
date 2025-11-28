@@ -128,9 +128,9 @@ export function renderNewman(svg, state, bondIndex) {
   const data = getNewmanData(state, bondIndex);
 
   const centerX = 200;
-  const centerY = 175;
+  const centerY = 190;     // Moved down to avoid title overlap
   const frontRadius = 50;  // Front carbon circle
-  const bondLength = 80;   // Length of substituent bonds
+  const bondLength = 70;   // Length of substituent bonds
 
   const group = createSVGElement('g', { class: 'newman-group' });
   svg.appendChild(group);

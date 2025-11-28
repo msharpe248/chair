@@ -25,6 +25,7 @@ import {
 import { createPyranoseState, changeSugarType, toggleAnomer } from './pyranose.js';
 import { createDecalinState, canFlip, getDecalinInfo, toggleDecalinType } from './decalin.js';
 import { renderNewman } from './newman.js';
+import { generateQuestion, checkAnswer } from './quiz.js';
 
 // Application State
 let state = createMoleculeState();
@@ -47,6 +48,17 @@ let panY = 0;
 let isPanning = false;
 let panStartX = 0;
 let panStartY = 0;
+
+// 3D rotation state
+let is3DEnabled = false;
+let rotateX = 0;
+let rotateY = 0;
+
+// Quiz state
+let quizDifficulty = 1;
+let currentQuestion = null;
+let selectedAnswer = null;
+let quizScore = { correct: 0, total: 0 };
 
 // Preset definitions for cyclohexane examples
 const PRESETS = {
@@ -264,6 +276,35 @@ function setupEventListeners() {
   // Export controls
   document.getElementById('export-png-btn').addEventListener('click', exportAsPNG);
   document.getElementById('export-svg-btn').addEventListener('click', exportAsSVG);
+
+  // 3D rotation controls
+  document.getElementById('enable-3d').addEventListener('change', handle3DToggle);
+  document.getElementById('rotate-x').addEventListener('input', handleRotationChange);
+  document.getElementById('rotate-y').addEventListener('input', handleRotationChange);
+  document.getElementById('reset-rotation-btn').addEventListener('click', resetRotation);
+
+  // Quiz controls
+  document.getElementById('quiz-mode-btn').addEventListener('click', openQuizModal);
+  document.getElementById('close-quiz-btn').addEventListener('click', closeQuizModal);
+  document.getElementById('new-question-btn').addEventListener('click', loadNewQuestion);
+  document.getElementById('submit-answer-btn').addEventListener('click', submitQuizAnswer);
+  document.getElementById('reset-quiz-btn').addEventListener('click', resetQuizScore);
+
+  // Quiz difficulty buttons
+  document.querySelectorAll('.difficulty-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      quizDifficulty = parseInt(e.target.dataset.level, 10);
+      document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
+      e.target.classList.add('selected');
+    });
+  });
+
+  // Close quiz modal when clicking outside
+  document.getElementById('quiz-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'quiz-modal') {
+      closeQuizModal();
+    }
+  });
 }
 
 /**
@@ -651,6 +692,62 @@ function resetZoom() {
 }
 
 /**
+ * Handle 3D toggle
+ */
+function handle3DToggle(e) {
+  is3DEnabled = e.target.checked;
+
+  const container = document.getElementById('chair-container');
+  const rotateXSlider = document.getElementById('rotate-x');
+  const rotateYSlider = document.getElementById('rotate-y');
+  const resetBtn = document.getElementById('reset-rotation-btn');
+
+  container.classList.toggle('mode-3d', is3DEnabled);
+  rotateXSlider.classList.toggle('hidden', !is3DEnabled);
+  rotateYSlider.classList.toggle('hidden', !is3DEnabled);
+  resetBtn.classList.toggle('hidden', !is3DEnabled);
+
+  if (!is3DEnabled) {
+    resetRotation();
+  }
+
+  update3DTransform();
+}
+
+/**
+ * Handle rotation slider change
+ */
+function handleRotationChange() {
+  rotateX = parseInt(document.getElementById('rotate-x').value, 10);
+  rotateY = parseInt(document.getElementById('rotate-y').value, 10);
+  update3DTransform();
+}
+
+/**
+ * Reset rotation to default
+ */
+function resetRotation() {
+  rotateX = 0;
+  rotateY = 0;
+  document.getElementById('rotate-x').value = 0;
+  document.getElementById('rotate-y').value = 0;
+  update3DTransform();
+}
+
+/**
+ * Update 3D transform on the SVG wrapper
+ */
+function update3DTransform() {
+  const wrapper = document.getElementById('svg-wrapper');
+
+  if (is3DEnabled) {
+    wrapper.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  } else {
+    wrapper.style.transform = '';
+  }
+}
+
+/**
  * Update SVG transform (zoom and pan)
  */
 function updateViewBox() {
@@ -723,6 +820,136 @@ function handleTouchMove(e) {
   panY = touch.clientY - panStartY;
   updateViewBox();
 }
+
+// ============== Quiz Functions ==============
+
+/**
+ * Open quiz modal
+ */
+function openQuizModal() {
+  document.getElementById('quiz-modal').classList.remove('hidden');
+}
+
+/**
+ * Close quiz modal
+ */
+function closeQuizModal() {
+  document.getElementById('quiz-modal').classList.add('hidden');
+}
+
+/**
+ * Load a new quiz question
+ */
+function loadNewQuestion() {
+  currentQuestion = generateQuestion(quizDifficulty);
+  selectedAnswer = null;
+
+  // Update the main view with the question's molecule
+  state = currentQuestion.molecule;
+  currentMode = 'cyclohexane';
+  currentView = 'chair';
+
+  // Update mode buttons
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === 'cyclohexane');
+  });
+
+  renderView();
+
+  // Display the question
+  document.getElementById('quiz-question').textContent = currentQuestion.question;
+
+  // Display options
+  const optionsContainer = document.getElementById('quiz-options');
+  optionsContainer.innerHTML = '';
+
+  currentQuestion.options.forEach((option, index) => {
+    const optionEl = document.createElement('label');
+    optionEl.className = 'quiz-option';
+    optionEl.innerHTML = `
+      <input type="radio" name="quiz-answer" value="${option.value}">
+      <span>${option.label}</span>
+    `;
+    optionEl.addEventListener('click', () => {
+      selectedAnswer = option.value;
+      document.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
+      optionEl.classList.add('selected');
+      document.getElementById('submit-answer-btn').disabled = false;
+    });
+    optionsContainer.appendChild(optionEl);
+  });
+
+  // Reset feedback
+  const feedback = document.getElementById('quiz-feedback');
+  feedback.classList.add('hidden');
+  feedback.classList.remove('correct', 'incorrect');
+
+  // Enable submit button only after selection
+  document.getElementById('submit-answer-btn').disabled = true;
+}
+
+/**
+ * Submit quiz answer
+ */
+function submitQuizAnswer() {
+  if (!currentQuestion || selectedAnswer === null) return;
+
+  const isCorrect = checkAnswer(currentQuestion, selectedAnswer);
+
+  // Update score
+  quizScore.total++;
+  if (isCorrect) {
+    quizScore.correct++;
+  }
+  updateQuizScoreDisplay();
+
+  // Show feedback
+  const feedback = document.getElementById('quiz-feedback');
+  feedback.classList.remove('hidden', 'correct', 'incorrect');
+  feedback.classList.add(isCorrect ? 'correct' : 'incorrect');
+  feedback.innerHTML = isCorrect
+    ? `<strong>Correct!</strong> ${currentQuestion.explanation}`
+    : `<strong>Incorrect.</strong> ${currentQuestion.explanation}`;
+
+  // Highlight correct/incorrect options
+  document.querySelectorAll('.quiz-option').forEach(el => {
+    const input = el.querySelector('input');
+    const value = input.value;
+
+    // Convert value to match type of correctAnswer
+    let typedValue = value;
+    if (typeof currentQuestion.correctAnswer === 'number') {
+      typedValue = parseFloat(value);
+    }
+
+    if (typedValue === currentQuestion.correctAnswer) {
+      el.classList.add('correct');
+    } else if (value === String(selectedAnswer)) {
+      el.classList.add('incorrect');
+    }
+    input.disabled = true;
+  });
+
+  // Disable submit button
+  document.getElementById('submit-answer-btn').disabled = true;
+}
+
+/**
+ * Reset quiz score
+ */
+function resetQuizScore() {
+  quizScore = { correct: 0, total: 0 };
+  updateQuizScoreDisplay();
+}
+
+/**
+ * Update the quiz score display
+ */
+function updateQuizScoreDisplay() {
+  document.getElementById('quiz-score').textContent = `${quizScore.correct}/${quizScore.total}`;
+}
+
+// ============== Export Functions ==============
 
 /**
  * Export the current view as PNG
