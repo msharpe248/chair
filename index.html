@@ -359,6 +359,21 @@
             <label><input type="checkbox" value="1-methylcyclohexene"> 1-Methylcyclohexene</label>
           </div>
         </div>
+        <div class="smiles-input-section">
+          <label for="alkene-smiles-input">Analyze your alkene (SMILES):</label>
+          <div class="smiles-input-row">
+            <input type="text" id="alkene-smiles-input" placeholder="e.g., CC=CC or C/C=C/C" spellcheck="false">
+            <button id="alkene-analyze-btn" class="primary-btn">Analyze</button>
+          </div>
+          <div class="smiles-examples">
+            <span>Examples:</span>
+            <button class="example-btn" data-smiles="C=C">ethene</button>
+            <button class="example-btn" data-smiles="CC=C">propene</button>
+            <button class="example-btn" data-smiles="C/C=C/C">trans-2-butene</button>
+            <button class="example-btn" data-smiles="C/C=C\C">cis-2-butene</button>
+            <button class="example-btn" data-smiles="CC(C)=C">isobutylene</button>
+          </div>
+        </div>
         <div class="alkene-view-toggle">
           <button class="alkene-view-btn active" data-view="comparison">Bar Chart</button>
           <button class="alkene-view-btn" data-view="energy">Energy Diagram</button>
@@ -397,6 +412,20 @@
           <div class="config-toggle">
             <button class="config-btn selected" data-config="R">(R)</button>
             <button class="config-btn" data-config="S">(S)</button>
+          </div>
+        </div>
+        <div class="smiles-input-section">
+          <label for="stereo-smiles-input">Analyze your molecule (SMILES):</label>
+          <div class="smiles-input-row">
+            <input type="text" id="stereo-smiles-input" placeholder="e.g., CC[C@@H](Br)C" spellcheck="false">
+            <button id="stereo-analyze-btn" class="primary-btn">Analyze</button>
+          </div>
+          <div class="smiles-examples">
+            <span>Examples:</span>
+            <button class="example-btn" data-smiles="CC[C@@H](Br)C">(R)-2-bromobutane</button>
+            <button class="example-btn" data-smiles="CC[C@H](Br)C">(S)-2-bromobutane</button>
+            <button class="example-btn" data-smiles="C[C@@H](O)C(=O)O">(R)-lactic acid</button>
+            <button class="example-btn" data-smiles="C[C@H](N)C(=O)O">L-alanine</button>
           </div>
         </div>
       </div>
@@ -636,6 +665,30 @@
       <div id="alkene-panel" class="energy-display hidden">
         <h3>Alkene Stability</h3>
 
+        <!-- SMILES Analysis Result -->
+        <div id="alkene-smiles-result" class="smiles-result hidden">
+          <h4>Your Alkene Analysis</h4>
+          <div class="smiles-result-content">
+            <div class="info-row">
+              <span>Structure:</span>
+              <span id="alkene-result-smiles" class="mono">—</span>
+            </div>
+            <div class="info-row">
+              <span>Classification:</span>
+              <span id="alkene-result-class">—</span>
+            </div>
+            <div class="info-row">
+              <span>Stereochemistry:</span>
+              <span id="alkene-result-stereo">—</span>
+            </div>
+            <div class="info-row highlight">
+              <span>Est. ΔH (hydrogenation):</span>
+              <span id="alkene-result-dh">—</span>
+            </div>
+            <div id="alkene-result-explanation" class="result-explanation"></div>
+          </div>
+        </div>
+
         <!-- Stability Ranking -->
         <div id="alkene-ranking" class="alkene-ranking">
           <h4>Stability Ranking</h4>
@@ -701,6 +754,34 @@
       <!-- Stereochemistry Tracker Panel -->
       <div id="stereo-panel" class="energy-display hidden">
         <h3>Stereochemistry</h3>
+
+        <!-- SMILES Analysis Result -->
+        <div id="stereo-smiles-result" class="smiles-result hidden">
+          <h4>Your Molecule Analysis</h4>
+          <div class="smiles-result-content">
+            <div class="info-row">
+              <span>Structure:</span>
+              <span id="stereo-result-smiles" class="mono">—</span>
+            </div>
+            <div class="info-row">
+              <span>Stereocenters:</span>
+              <span id="stereo-result-centers">—</span>
+            </div>
+            <div class="info-row">
+              <span>Leaving Groups:</span>
+              <span id="stereo-result-lg">—</span>
+            </div>
+            <div class="info-row highlight">
+              <span>SN2 Outcome:</span>
+              <span id="stereo-result-sn2">—</span>
+            </div>
+            <div class="info-row">
+              <span>SN1 Outcome:</span>
+              <span id="stereo-result-sn1">—</span>
+            </div>
+            <div id="stereo-result-explanation" class="result-explanation"></div>
+          </div>
+        </div>
 
         <!-- Outcome Summary -->
         <div id="stereo-outcome" class="stereo-outcome">

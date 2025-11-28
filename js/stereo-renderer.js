@@ -144,93 +144,94 @@ function renderWedgeDash(svg, stereocenter, cx, cy) {
  */
 export function renderSN2Mechanism(svg, startConfig = 'R') {
   svg.innerHTML = '';
-  svg.setAttribute('viewBox', '0 0 400 350');
+  svg.setAttribute('viewBox', '0 0 700 420');
 
   const NS = 'http://www.w3.org/2000/svg';
   const endConfig = startConfig === 'R' ? 'S' : 'R';
 
   // Title
   const title = document.createElementNS(NS, 'text');
-  title.setAttribute('x', '200');
-  title.setAttribute('y', '25');
+  title.setAttribute('x', '350');
+  title.setAttribute('y', '30');
   title.setAttribute('text-anchor', 'middle');
   title.setAttribute('class', 'stereo-title');
   title.textContent = 'SN2: Walden Inversion';
   svg.appendChild(title);
 
-  // Starting material
+  // --- Starting material (left) ---
   const startLabel = document.createElementNS(NS, 'text');
-  startLabel.setAttribute('x', '80');
+  startLabel.setAttribute('x', '90');
   startLabel.setAttribute('y', '60');
   startLabel.setAttribute('text-anchor', 'middle');
-  startLabel.setAttribute('font-size', '12');
-  startLabel.setAttribute('fill', COLORS.carbon);
-  startLabel.textContent = `Starting: (${startConfig})`;
+  startLabel.setAttribute('font-size', '13');
+  startLabel.setAttribute('font-weight', 'bold');
+  startLabel.setAttribute('fill', COLORS[startConfig]);
+  startLabel.textContent = `(${startConfig})-Substrate`;
   svg.appendChild(startLabel);
 
   renderWedgeDash(svg, {
     config: startConfig,
     substituents: ['R₁', 'R₂', 'LG', 'H']
-  }, 80, 140);
+  }, 90, 140);
 
-  // Arrow
+  // --- Arrow 1: to transition state (arcs above to avoid overlap) ---
   const arrow = document.createElementNS(NS, 'path');
-  arrow.setAttribute('d', 'M 140 140 L 180 140');
+  arrow.setAttribute('d', 'M 165 130 Q 200 100 240 130');
   arrow.setAttribute('stroke', COLORS.arrow);
   arrow.setAttribute('stroke-width', '3');
+  arrow.setAttribute('fill', 'none');
   arrow.setAttribute('marker-end', 'url(#arrowhead-green)');
   svg.appendChild(arrow);
 
-  // Nucleophile
+  // Nucleophile attack label
   const nucLabel = document.createElementNS(NS, 'text');
-  nucLabel.setAttribute('x', '160');
-  nucLabel.setAttribute('y', '115');
+  nucLabel.setAttribute('x', '202');
+  nucLabel.setAttribute('y', '95');
   nucLabel.setAttribute('text-anchor', 'middle');
-  nucLabel.setAttribute('font-size', '11');
+  nucLabel.setAttribute('font-size', '12');
   nucLabel.setAttribute('fill', COLORS.nucleophile);
-  nucLabel.textContent = 'Nu⁻';
+  nucLabel.textContent = '+Nu⁻';
   svg.appendChild(nucLabel);
 
-  // Transition state
+  // --- Transition state (center) ---
   const tsLabel = document.createElementNS(NS, 'text');
-  tsLabel.setAttribute('x', '200');
+  tsLabel.setAttribute('x', '350');
   tsLabel.setAttribute('y', '60');
   tsLabel.setAttribute('text-anchor', 'middle');
-  tsLabel.setAttribute('font-size', '12');
-  tsLabel.setAttribute('fill', COLORS.carbon);
+  tsLabel.setAttribute('font-size', '13');
+  tsLabel.setAttribute('fill', '#64748b');
   tsLabel.textContent = 'Transition State';
   svg.appendChild(tsLabel);
 
-  // Draw transition state (simplified)
   const tsGroup = document.createElementNS(NS, 'g');
-  tsGroup.setAttribute('transform', 'translate(200, 140)');
+  tsGroup.setAttribute('transform', 'translate(350, 140)');
 
   // Dashed bonds showing partial bonding
   const nuDash = document.createElementNS(NS, 'line');
-  nuDash.setAttribute('x1', '-45');
+  nuDash.setAttribute('x1', '-60');
   nuDash.setAttribute('y1', '0');
-  nuDash.setAttribute('x2', '-12');
+  nuDash.setAttribute('x2', '-14');
   nuDash.setAttribute('y2', '0');
   nuDash.setAttribute('stroke', COLORS.nucleophile);
   nuDash.setAttribute('stroke-width', '2');
-  nuDash.setAttribute('stroke-dasharray', '4,2');
+  nuDash.setAttribute('stroke-dasharray', '6,3');
   tsGroup.appendChild(nuDash);
 
   const lgDash = document.createElementNS(NS, 'line');
-  lgDash.setAttribute('x1', '12');
+  lgDash.setAttribute('x1', '14');
   lgDash.setAttribute('y1', '0');
-  lgDash.setAttribute('x2', '45');
+  lgDash.setAttribute('x2', '60');
   lgDash.setAttribute('y2', '0');
   lgDash.setAttribute('stroke', '#dc2626');
   lgDash.setAttribute('stroke-width', '2');
-  lgDash.setAttribute('stroke-dasharray', '4,2');
+  lgDash.setAttribute('stroke-dasharray', '6,3');
   tsGroup.appendChild(lgDash);
 
   // Central carbon (planar in TS)
   const tsCarbon = document.createElementNS(NS, 'circle');
   tsCarbon.setAttribute('cx', '0');
   tsCarbon.setAttribute('cy', '0');
-  tsCarbon.setAttribute('r', '10');
+  tsCarbon.setAttribute('r', '14');
   tsCarbon.setAttribute('fill', 'white');
   tsCarbon.setAttribute('stroke', '#94a3b8');
   tsCarbon.setAttribute('stroke-width', '2');
@@ -238,94 +239,97 @@ export function renderSN2Mechanism(svg, startConfig = 'R') {
 
   const tsC = document.createElementNS(NS, 'text');
   tsC.setAttribute('x', '0');
-  tsC.setAttribute('y', '4');
+  tsC.setAttribute('y', '5');
   tsC.setAttribute('text-anchor', 'middle');
-  tsC.setAttribute('font-size', '10');
+  tsC.setAttribute('font-size', '12');
   tsC.textContent = 'C';
   tsGroup.appendChild(tsC);
 
-  // Nu label
+  // Nu label (left side)
   const nuLabel2 = document.createElementNS(NS, 'text');
-  nuLabel2.setAttribute('x', '-55');
+  nuLabel2.setAttribute('x', '-78');
   nuLabel2.setAttribute('y', '5');
-  nuLabel2.setAttribute('font-size', '10');
+  nuLabel2.setAttribute('font-size', '12');
   nuLabel2.setAttribute('fill', COLORS.nucleophile);
   nuLabel2.textContent = 'Nu';
   tsGroup.appendChild(nuLabel2);
 
-  // LG label
+  // LG label (right side)
   const lgLabel = document.createElementNS(NS, 'text');
-  lgLabel.setAttribute('x', '50');
+  lgLabel.setAttribute('x', '68');
   lgLabel.setAttribute('y', '5');
-  lgLabel.setAttribute('font-size', '10');
+  lgLabel.setAttribute('font-size', '12');
   lgLabel.setAttribute('fill', '#dc2626');
   lgLabel.textContent = 'LG';
   tsGroup.appendChild(lgLabel);
 
   // Brackets for TS
   const bracket1 = document.createElementNS(NS, 'text');
-  bracket1.setAttribute('x', '-65');
-  bracket1.setAttribute('y', '5');
-  bracket1.setAttribute('font-size', '24');
+  bracket1.setAttribute('x', '-100');
+  bracket1.setAttribute('y', '10');
+  bracket1.setAttribute('font-size', '32');
   bracket1.textContent = '[';
   tsGroup.appendChild(bracket1);
 
   const bracket2 = document.createElementNS(NS, 'text');
-  bracket2.setAttribute('x', '58');
-  bracket2.setAttribute('y', '5');
-  bracket2.setAttribute('font-size', '24');
+  bracket2.setAttribute('x', '85');
+  bracket2.setAttribute('y', '10');
+  bracket2.setAttribute('font-size', '32');
   bracket2.textContent = ']‡';
   tsGroup.appendChild(bracket2);
 
   svg.appendChild(tsGroup);
 
-  // Arrow to product
+  // --- Arrow 2: to product (arcs above to avoid overlap) ---
   const arrow2 = document.createElementNS(NS, 'path');
-  arrow2.setAttribute('d', 'M 260 140 L 300 140');
+  arrow2.setAttribute('d', 'M 460 130 Q 505 100 550 130');
   arrow2.setAttribute('stroke', COLORS.arrow);
   arrow2.setAttribute('stroke-width', '3');
+  arrow2.setAttribute('fill', 'none');
   arrow2.setAttribute('marker-end', 'url(#arrowhead-green)');
   svg.appendChild(arrow2);
 
-  // Product
+  // --- Product (right) ---
   const prodLabel = document.createElementNS(NS, 'text');
-  prodLabel.setAttribute('x', '320');
+  prodLabel.setAttribute('x', '610');
   prodLabel.setAttribute('y', '60');
   prodLabel.setAttribute('text-anchor', 'middle');
-  prodLabel.setAttribute('font-size', '12');
-  prodLabel.setAttribute('fill', COLORS.carbon);
-  prodLabel.textContent = `Product: (${endConfig})`;
+  prodLabel.setAttribute('font-size', '13');
+  prodLabel.setAttribute('font-weight', 'bold');
+  prodLabel.setAttribute('fill', COLORS[endConfig]);
+  prodLabel.textContent = `(${endConfig})-Product`;
   svg.appendChild(prodLabel);
 
   renderWedgeDash(svg, {
     config: endConfig,
     substituents: ['R₁', 'Nu', 'R₂', 'H']
-  }, 320, 140);
+  }, 610, 140);
 
-  // Add legend/explanation
+  // --- Explanation box at bottom ---
   const explanationBox = document.createElementNS(NS, 'rect');
   explanationBox.setAttribute('x', '30');
-  explanationBox.setAttribute('y', '240');
-  explanationBox.setAttribute('width', '340');
-  explanationBox.setAttribute('height', '100');
-  explanationBox.setAttribute('rx', '8');
+  explanationBox.setAttribute('y', '250');
+  explanationBox.setAttribute('width', '640');
+  explanationBox.setAttribute('height', '155');
+  explanationBox.setAttribute('rx', '10');
   explanationBox.setAttribute('fill', '#f1f5f9');
   explanationBox.setAttribute('stroke', '#e2e8f0');
   svg.appendChild(explanationBox);
 
   const expLines = [
     'SN2 Key Points:',
-    '• Nucleophile attacks from backside (180° from LG)',
-    '• Single concerted step - no intermediate',
-    `• Complete inversion: (${startConfig}) → (${endConfig})`,
-    '• Called "Walden inversion"'
+    '• Nucleophile attacks from the backside (180° from leaving group)',
+    '• Single concerted step — no carbocation intermediate',
+    `• Complete stereochemical inversion: (${startConfig}) → (${endConfig})`,
+    '• Known as "Walden inversion"',
+    '• Rate = k[substrate][nucleophile] (bimolecular)'
   ];
 
   expLines.forEach((line, i) => {
     const text = document.createElementNS(NS, 'text');
-    text.setAttribute('x', '45');
-    text.setAttribute('y', 258 + (i * 18));
-    text.setAttribute('font-size', i === 0 ? '12' : '11');
+    text.setAttribute('x', '55');
+    text.setAttribute('y', 278 + (i * 22));
+    text.setAttribute('font-size', i === 0 ? '14' : '12');
     text.setAttribute('font-weight', i === 0 ? '600' : '400');
     text.setAttribute('fill', '#334155');
     text.textContent = line;
@@ -343,61 +347,61 @@ export function renderSN2Mechanism(svg, startConfig = 'R') {
  */
 export function renderSN1Mechanism(svg, startConfig = 'R') {
   svg.innerHTML = '';
-  svg.setAttribute('viewBox', '0 0 400 350');
+  svg.setAttribute('viewBox', '0 0 700 480');
 
   const NS = 'http://www.w3.org/2000/svg';
 
   // Title
   const title = document.createElementNS(NS, 'text');
-  title.setAttribute('x', '200');
-  title.setAttribute('y', '25');
+  title.setAttribute('x', '350');
+  title.setAttribute('y', '30');
   title.setAttribute('text-anchor', 'middle');
   title.setAttribute('class', 'stereo-title');
   title.textContent = 'SN1: Racemization';
   svg.appendChild(title);
 
-  // Starting material label
+  // --- Step 1: Starting material (left) ---
   const startLabel = document.createElementNS(NS, 'text');
-  startLabel.setAttribute('x', '60');
-  startLabel.setAttribute('y', '55');
+  startLabel.setAttribute('x', '90');
+  startLabel.setAttribute('y', '145');
   startLabel.setAttribute('text-anchor', 'middle');
-  startLabel.setAttribute('font-size', '11');
-  startLabel.setAttribute('fill', COLORS.carbon);
-  startLabel.textContent = `(${startConfig})-substrate`;
+  startLabel.setAttribute('font-size', '13');
+  startLabel.setAttribute('font-weight', 'bold');
+  startLabel.setAttribute('fill', COLORS[startConfig]);
+  startLabel.textContent = `(${startConfig})-Substrate`;
   svg.appendChild(startLabel);
 
-  // Simplified starting structure
   renderWedgeDash(svg, {
     config: startConfig,
     substituents: ['R₁', 'R₂', 'LG', 'H']
-  }, 60, 120);
+  }, 90, 220);
 
-  // Arrow to carbocation
+  // --- Arrow 1: to carbocation ---
   const arrow1 = document.createElementNS(NS, 'path');
-  arrow1.setAttribute('d', 'M 115 120 L 145 120');
+  arrow1.setAttribute('d', 'M 155 220 L 230 220');
   arrow1.setAttribute('stroke', COLORS.arrow);
-  arrow1.setAttribute('stroke-width', '2');
+  arrow1.setAttribute('stroke-width', '3');
   arrow1.setAttribute('marker-end', 'url(#arrowhead-green)');
   svg.appendChild(arrow1);
 
   // LG leaving label
   const lgLabel = document.createElementNS(NS, 'text');
-  lgLabel.setAttribute('x', '130');
-  lgLabel.setAttribute('y', '100');
-  lgLabel.setAttribute('font-size', '9');
+  lgLabel.setAttribute('x', '192');
+  lgLabel.setAttribute('y', '205');
+  lgLabel.setAttribute('font-size', '12');
   lgLabel.setAttribute('fill', '#dc2626');
   lgLabel.textContent = '-LG⁻';
   svg.appendChild(lgLabel);
 
-  // Carbocation (planar)
+  // --- Step 2: Carbocation (center) ---
   const carbocatGroup = document.createElementNS(NS, 'g');
-  carbocatGroup.setAttribute('transform', 'translate(190, 120)');
+  carbocatGroup.setAttribute('transform', 'translate(320, 220)');
 
-  // Planar carbocation
+  // Planar carbocation circle
   const catCenter = document.createElementNS(NS, 'circle');
   catCenter.setAttribute('cx', '0');
   catCenter.setAttribute('cy', '0');
-  catCenter.setAttribute('r', '10');
+  catCenter.setAttribute('r', '14');
   catCenter.setAttribute('fill', '#fef3c7');
   catCenter.setAttribute('stroke', '#f59e0b');
   catCenter.setAttribute('stroke-width', '2');
@@ -405,24 +409,25 @@ export function renderSN1Mechanism(svg, startConfig = 'R') {
 
   const catLabel = document.createElementNS(NS, 'text');
   catLabel.setAttribute('x', '0');
-  catLabel.setAttribute('y', '4');
+  catLabel.setAttribute('y', '5');
   catLabel.setAttribute('text-anchor', 'middle');
-  catLabel.setAttribute('font-size', '9');
+  catLabel.setAttribute('font-size', '11');
+  catLabel.setAttribute('font-weight', 'bold');
   catLabel.setAttribute('fill', '#92400e');
   catLabel.textContent = 'C⁺';
   carbocatGroup.appendChild(catLabel);
 
-  // Draw sp2 planar geometry
+  // Draw sp2 planar geometry (3 bonds at 120°)
   const angles = [-90, 150, 30];
   const labels = ['R₁', 'R₂', 'H'];
   angles.forEach((angle, i) => {
     const rad = angle * Math.PI / 180;
-    const x2 = Math.cos(rad) * 35;
-    const y2 = Math.sin(rad) * 35;
+    const x2 = Math.cos(rad) * 45;
+    const y2 = Math.sin(rad) * 45;
 
     const bond = document.createElementNS(NS, 'line');
-    bond.setAttribute('x1', Math.cos(rad) * 10);
-    bond.setAttribute('y1', Math.sin(rad) * 10);
+    bond.setAttribute('x1', Math.cos(rad) * 14);
+    bond.setAttribute('y1', Math.sin(rad) * 14);
     bond.setAttribute('x2', x2);
     bond.setAttribute('y2', y2);
     bond.setAttribute('stroke', COLORS.bond);
@@ -430,118 +435,122 @@ export function renderSN1Mechanism(svg, startConfig = 'R') {
     carbocatGroup.appendChild(bond);
 
     const label = document.createElementNS(NS, 'text');
-    label.setAttribute('x', Math.cos(rad) * 45);
-    label.setAttribute('y', Math.sin(rad) * 45 + 4);
+    label.setAttribute('x', Math.cos(rad) * 58);
+    label.setAttribute('y', Math.sin(rad) * 58 + 4);
     label.setAttribute('text-anchor', 'middle');
-    label.setAttribute('font-size', '10');
+    label.setAttribute('font-size', '11');
     label.textContent = labels[i];
     carbocatGroup.appendChild(label);
   });
 
   svg.appendChild(carbocatGroup);
 
-  // Carbocation label
+  // Carbocation title
   const catTitle = document.createElementNS(NS, 'text');
-  catTitle.setAttribute('x', '190');
-  catTitle.setAttribute('y', '55');
+  catTitle.setAttribute('x', '320');
+  catTitle.setAttribute('y', '145');
   catTitle.setAttribute('text-anchor', 'middle');
-  catTitle.setAttribute('font-size', '11');
+  catTitle.setAttribute('font-size', '13');
   catTitle.setAttribute('fill', '#f59e0b');
-  catTitle.textContent = 'Planar C⁺';
+  catTitle.textContent = 'Planar Carbocation';
   svg.appendChild(catTitle);
 
-  // Arrows to both products (showing attack from both faces)
-  // Top arrow
+  // --- Arrows to products (branching) ---
+  // Arrow to (R) product - curves upward
   const arrow2a = document.createElementNS(NS, 'path');
-  arrow2a.setAttribute('d', 'M 225 100 Q 260 80 290 95');
-  arrow2a.setAttribute('stroke', COLORS.nucleophile);
-  arrow2a.setAttribute('stroke-width', '2');
+  arrow2a.setAttribute('d', 'M 390 190 Q 450 100 510 110');
+  arrow2a.setAttribute('stroke', COLORS.arrow);
+  arrow2a.setAttribute('stroke-width', '3');
   arrow2a.setAttribute('fill', 'none');
-  arrow2a.setAttribute('marker-end', 'url(#arrowhead-nu)');
+  arrow2a.setAttribute('marker-end', 'url(#arrowhead-green)');
   svg.appendChild(arrow2a);
 
-  // Bottom arrow
+  // Arrow to (S) product - curves downward
   const arrow2b = document.createElementNS(NS, 'path');
-  arrow2b.setAttribute('d', 'M 225 140 Q 260 160 290 145');
-  arrow2b.setAttribute('stroke', COLORS.nucleophile);
-  arrow2b.setAttribute('stroke-width', '2');
+  arrow2b.setAttribute('d', 'M 390 250 Q 450 340 510 330');
+  arrow2b.setAttribute('stroke', COLORS.arrow);
+  arrow2b.setAttribute('stroke-width', '3');
   arrow2b.setAttribute('fill', 'none');
-  arrow2b.setAttribute('marker-end', 'url(#arrowhead-nu)');
+  arrow2b.setAttribute('marker-end', 'url(#arrowhead-green)');
   svg.appendChild(arrow2b);
 
-  // Nu labels
+  // Nu labels on arrows
   const nuTop = document.createElementNS(NS, 'text');
-  nuTop.setAttribute('x', '260');
-  nuTop.setAttribute('y', '75');
-  nuTop.setAttribute('font-size', '9');
+  nuTop.setAttribute('x', '440');
+  nuTop.setAttribute('y', '120');
+  nuTop.setAttribute('font-size', '12');
   nuTop.setAttribute('fill', COLORS.nucleophile);
-  nuTop.textContent = 'Nu⁻';
+  nuTop.textContent = '+Nu⁻ (top face)';
   svg.appendChild(nuTop);
 
   const nuBot = document.createElementNS(NS, 'text');
-  nuBot.setAttribute('x', '260');
-  nuBot.setAttribute('y', '175');
-  nuBot.setAttribute('font-size', '9');
+  nuBot.setAttribute('x', '440');
+  nuBot.setAttribute('y', '330');
+  nuBot.setAttribute('font-size', '12');
   nuBot.setAttribute('fill', COLORS.nucleophile);
-  nuBot.textContent = 'Nu⁻';
+  nuBot.textContent = '+Nu⁻ (bottom face)';
   svg.appendChild(nuBot);
 
-  // Products (R and S)
+  // --- Products (R and S) ---
+  // (R) Product - top right
   const prod1Label = document.createElementNS(NS, 'text');
-  prod1Label.setAttribute('x', '340');
+  prod1Label.setAttribute('x', '610');
   prod1Label.setAttribute('y', '55');
   prod1Label.setAttribute('text-anchor', 'middle');
-  prod1Label.setAttribute('font-size', '11');
+  prod1Label.setAttribute('font-size', '14');
+  prod1Label.setAttribute('font-weight', 'bold');
   prod1Label.setAttribute('fill', COLORS.R);
-  prod1Label.textContent = '(R) 50%';
+  prod1Label.textContent = '(R)-Product 50%';
   svg.appendChild(prod1Label);
 
   renderWedgeDash(svg, {
     config: 'R',
     substituents: ['R₁', 'R₂', 'Nu', 'H']
-  }, 340, 95);
+  }, 610, 130);
 
+  // (S) Product - bottom right
   const prod2Label = document.createElementNS(NS, 'text');
-  prod2Label.setAttribute('x', '340');
-  prod2Label.setAttribute('y', '205');
+  prod2Label.setAttribute('x', '610');
+  prod2Label.setAttribute('y', '270');
   prod2Label.setAttribute('text-anchor', 'middle');
-  prod2Label.setAttribute('font-size', '11');
+  prod2Label.setAttribute('font-size', '14');
+  prod2Label.setAttribute('font-weight', 'bold');
   prod2Label.setAttribute('fill', COLORS.S);
-  prod2Label.textContent = '(S) 50%';
+  prod2Label.textContent = '(S)-Product 50%';
   svg.appendChild(prod2Label);
 
   renderWedgeDash(svg, {
     config: 'S',
     substituents: ['R₁', 'Nu', 'R₂', 'H']
-  }, 340, 245);
+  }, 610, 345);
 
-  // Explanation box
+  // --- Explanation box at bottom ---
   const explanationBox = document.createElementNS(NS, 'rect');
-  explanationBox.setAttribute('x', '10');
-  explanationBox.setAttribute('y', '295');
-  explanationBox.setAttribute('width', '380');
-  explanationBox.setAttribute('height', '50');
-  explanationBox.setAttribute('rx', '6');
+  explanationBox.setAttribute('x', '30');
+  explanationBox.setAttribute('y', '415');
+  explanationBox.setAttribute('width', '640');
+  explanationBox.setAttribute('height', '55');
+  explanationBox.setAttribute('rx', '10');
   explanationBox.setAttribute('fill', '#f1f5f9');
   explanationBox.setAttribute('stroke', '#e2e8f0');
   svg.appendChild(explanationBox);
 
   const expText = document.createElementNS(NS, 'text');
-  expText.setAttribute('x', '200');
-  expText.setAttribute('y', '315');
+  expText.setAttribute('x', '350');
+  expText.setAttribute('y', '438');
   expText.setAttribute('text-anchor', 'middle');
-  expText.setAttribute('font-size', '10');
+  expText.setAttribute('font-size', '12');
   expText.setAttribute('fill', '#334155');
-  expText.textContent = 'Planar carbocation allows attack from either face → Racemization';
+  expText.textContent = 'Planar carbocation allows nucleophile attack from either face → Racemization';
   svg.appendChild(expText);
 
   const expText2 = document.createElementNS(NS, 'text');
-  expText2.setAttribute('x', '200');
-  expText2.setAttribute('y', '332');
+  expText2.setAttribute('x', '350');
+  expText2.setAttribute('y', '458');
   expText2.setAttribute('text-anchor', 'middle');
-  expText2.setAttribute('font-size', '10');
+  expText2.setAttribute('font-size', '12');
   expText2.setAttribute('fill', '#334155');
-  expText2.textContent = 'Result: 50% (R) + 50% (S) = Racemic mixture (not optically active)';
+  expText2.textContent = 'Result: 50% (R) + 50% (S) = Racemic mixture (optically inactive)';
   svg.appendChild(expText2);
 
   // Add marker definitions

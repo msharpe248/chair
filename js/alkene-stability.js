@@ -260,6 +260,251 @@ export function compareAlkenes(alkene1, alkene2) {
 }
 
 /**
+ * Parse alkene SMILES and analyze stability
+ * @param {string} smiles - SMILES string for an alkene
+ * @returns {Object} Alkene analysis data
+ */
+export function parseAlkeneSMILES(smiles) {
+  if (!smiles || typeof smiles !== 'string') {
+    return { error: 'Please enter a valid SMILES string' };
+  }
+
+  // Clean up the SMILES
+  const cleanSmiles = smiles.trim();
+
+  // Check for double bond
+  if (!cleanSmiles.includes('=')) {
+    return { error: 'No double bond found. Please enter an alkene (contains C=C)' };
+  }
+
+  try {
+    // Parse the SMILES to find double bond and substituents
+    const analysis = analyzeAlkeneSMILES(cleanSmiles);
+
+    if (analysis.error) {
+      return analysis;
+    }
+
+    // Estimate heat of hydrogenation based on substitution pattern
+    const deltaH = estimateHeatOfHydrogenation(analysis);
+
+    // Determine substitution pattern name
+    const substitutionNames = {
+      0: 'unsubstituted',
+      1: 'monosubstituted',
+      2: 'disubstituted',
+      3: 'trisubstituted',
+      4: 'tetrasubstituted'
+    };
+
+    return {
+      smiles: cleanSmiles,
+      name: generateAlkeneName(analysis),
+      formula: cleanSmiles,
+      substitution: substitutionNames[analysis.totalSubstituents] || 'unknown',
+      substituents: analysis.totalSubstituents,
+      deltaH: deltaH,
+      stereochemistry: analysis.stereochemistry,
+      c1Substituents: analysis.c1Substituents,
+      c2Substituents: analysis.c2Substituents,
+      explanation: getSubstitutionExplanation(analysis)
+    };
+  } catch (e) {
+    return { error: 'Could not parse SMILES: ' + e.message };
+  }
+}
+
+/**
+ * Analyze alkene SMILES structure
+ */
+function analyzeAlkeneSMILES(smiles) {
+  // Find the double bond position
+  const doubleBondIndex = smiles.indexOf('=');
+
+  // Count substituents on each carbon of the double bond
+  // This is a simplified parser - works for common cases
+
+  let c1Substituents = 0;  // Carbon before =
+  let c2Substituents = 0;  // Carbon after =
+  let stereochemistry = null;
+
+  // Check for E/Z stereochemistry markers
+  if (smiles.includes('/') || smiles.includes('\\')) {
+    // Simplified E/Z detection based on marker positions
+    const beforeDouble = smiles.substring(0, doubleBondIndex);
+    const afterDouble = smiles.substring(doubleBondIndex + 1);
+
+    // Count slashes to determine configuration
+    const slashBefore = (beforeDouble.match(/[/\\]/g) || []).length;
+    const slashAfter = (afterDouble.match(/[/\\]/g) || []).length;
+
+    if (slashBefore > 0 || slashAfter > 0) {
+      // Check pattern: /C=C/ or /C=C\ etc.
+      if ((beforeDouble.includes('/') && afterDouble.includes('/')) ||
+          (beforeDouble.includes('\\') && afterDouble.includes('\\'))) {
+        stereochemistry = 'E';
+      } else if ((beforeDouble.includes('/') && afterDouble.includes('\\')) ||
+                 (beforeDouble.includes('\\') && afterDouble.includes('/'))) {
+        stereochemistry = 'Z';
+      }
+    }
+  }
+
+  // Parse to count substituents
+  // Look at what's connected to each carbon of the double bond
+
+  // Get the part before the double bond
+  const beforePart = smiles.substring(0, doubleBondIndex);
+  // Get the part after the double bond
+  const afterPart = smiles.substring(doubleBondIndex + 1);
+
+  // Count substituents before the first carbon of C=C
+  c1Substituents = countSubstituents(beforePart, 'before');
+
+  // Count substituents after the second carbon of C=C
+  c2Substituents = countSubstituents(afterPart, 'after');
+
+  const totalSubstituents = c1Substituents + c2Substituents;
+
+  return {
+    c1Substituents,
+    c2Substituents,
+    totalSubstituents,
+    stereochemistry
+  };
+}
+
+/**
+ * Count substituents connected to a carbon
+ */
+function countSubstituents(part, position) {
+  if (!part || part.length === 0) return 0;
+
+  // Remove stereochemistry markers for counting
+  const cleanPart = part.replace(/[/\\]/g, '');
+
+  let count = 0;
+
+  // Count carbon chains and branches
+  // Look for: C, c (aromatic), parentheses (branches)
+
+  if (position === 'before') {
+    // For the part before C=C, count what's attached
+    // Each C before the double bond carbon is a substituent
+    const carbons = (cleanPart.match(/C/gi) || []).length;
+    if (carbons > 0) count++;
+
+    // Check for branches (parentheses indicate branching)
+    const branches = (cleanPart.match(/\(/g) || []).length;
+    count += branches;
+  } else {
+    // For the part after C=C
+    // The first C after = is part of the double bond
+    // Everything after that first C is on C2
+
+    // Find where the first carbon's substituents end
+    let inBranch = 0;
+    let passedFirstCarbon = false;
+    let afterFirstCarbon = '';
+
+    for (let i = 0; i < cleanPart.length; i++) {
+      const char = cleanPart[i];
+      if (char === '(') inBranch++;
+      else if (char === ')') inBranch--;
+      else if ((char === 'C' || char === 'c') && !passedFirstCarbon && inBranch === 0) {
+        passedFirstCarbon = true;
+        afterFirstCarbon = cleanPart.substring(i + 1);
+        break;
+      }
+    }
+
+    // Count what's attached to the second carbon (after =C)
+    // Check if there's anything on the =C itself (in parentheses right after =)
+    if (cleanPart.startsWith('C(') || cleanPart.startsWith('c(')) {
+      // There's a branch on the =C carbon
+      count++;
+    }
+
+    // Check for continuation after the =C carbon
+    if (afterFirstCarbon.length > 0) {
+      count++;
+    }
+
+    // Check for additional branches
+    const branchesInFirst = (cleanPart.substring(0, cleanPart.indexOf('C') + 1).match(/\(/g) || []).length;
+    count += branchesInFirst;
+  }
+
+  return Math.min(count, 2); // Max 2 substituents per carbon
+}
+
+/**
+ * Estimate heat of hydrogenation based on substitution
+ */
+function estimateHeatOfHydrogenation(analysis) {
+  // Base values (approximate, kcal/mol)
+  // Unsubstituted: ~-32.8 (ethene)
+  // Each substituent adds ~1-1.5 kcal/mol stability
+
+  const baseHeat = -32.8;
+  const stabilizationPerSubstituent = 1.3;
+
+  let deltaH = baseHeat + (analysis.totalSubstituents * stabilizationPerSubstituent);
+
+  // E isomers are more stable than Z by ~1 kcal/mol
+  if (analysis.stereochemistry === 'E') {
+    deltaH += 0.5;
+  } else if (analysis.stereochemistry === 'Z') {
+    deltaH -= 0.5;
+  }
+
+  return Math.round(deltaH * 10) / 10;
+}
+
+/**
+ * Generate a name for the analyzed alkene
+ */
+function generateAlkeneName(analysis) {
+  const subNames = {
+    0: 'Unsubstituted alkene',
+    1: 'Monosubstituted alkene',
+    2: 'Disubstituted alkene',
+    3: 'Trisubstituted alkene',
+    4: 'Tetrasubstituted alkene'
+  };
+
+  let name = subNames[analysis.totalSubstituents] || 'Alkene';
+
+  if (analysis.stereochemistry) {
+    name += ` (${analysis.stereochemistry})`;
+  }
+
+  return name;
+}
+
+/**
+ * Get explanation for substitution pattern
+ */
+function getSubstitutionExplanation(analysis) {
+  const explanations = [];
+
+  explanations.push(`${analysis.totalSubstituents} substituent(s) on the double bond`);
+  explanations.push(`C1 has ${analysis.c1Substituents} alkyl group(s), C2 has ${analysis.c2Substituents} alkyl group(s)`);
+
+  if (analysis.totalSubstituents >= 2) {
+    explanations.push('Multiple substituents provide hyperconjugation stabilization');
+  }
+
+  if (analysis.stereochemistry === 'E') {
+    explanations.push('E (trans) isomer: substituents on opposite sides - less steric strain');
+  } else if (analysis.stereochemistry === 'Z') {
+    explanations.push('Z (cis) isomer: substituents on same side - more steric strain');
+  }
+
+  return explanations;
+}
+
+/**
  * Generate quiz question about alkene stability
  * @returns {Object} Quiz question data
  */

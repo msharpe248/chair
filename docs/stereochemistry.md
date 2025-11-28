@@ -110,13 +110,14 @@ Diastereomers are stereoisomers that are **NOT mirror images**:
 ### Modes
 
 1. **SN2 Inversion**: Visualize the Walden inversion mechanism
-   - See backside attack
-   - Watch configuration invert
+   - See backside attack with clear curved arrows
+   - Watch configuration invert through transition state
    - Understand why product is optically active
 
 2. **SN1 Racemization**: Visualize racemization
-   - See planar carbocation intermediate
-   - Watch attack from both faces
+   - See planar carbocation intermediate (sp² geometry)
+   - Watch nucleophile attack from both faces (top and bottom)
+   - Branching arrows show both pathways leading to 50/50 products
    - Understand why product is racemic
 
 3. **Enantiomers**: Compare R and S enantiomers
@@ -132,6 +133,27 @@ Diastereomers are stereoisomers that are **NOT mirror images**:
 - **Mode**: Select SN2, SN1, or stereoisomer comparison
 - **Substrate**: Choose a preset molecule
 - **Configuration**: Toggle between R and S starting material
+
+### SMILES Input
+
+Analyze your own chiral molecules using SMILES notation:
+
+1. **Enter a SMILES string** in the input field (e.g., `CC[C@@H](Br)C`)
+2. **Click "Analyze"** to see stereochemical analysis
+3. **Use stereochemistry notation**:
+   - `@` = S configuration (counterclockwise)
+   - `@@` = R configuration (clockwise)
+
+**Examples:**
+- `CC[C@@H](Br)C` — (R)-2-bromobutane
+- `CC[C@H](Br)C` — (S)-2-bromobutane
+- `C[C@@H](O)C(=O)O` — (R)-lactic acid
+- `C[C@H](N)C(=O)O` — L-alanine
+
+The analyzer will identify:
+- Stereocenters and their configurations
+- Leaving groups (Br, Cl, I, OTs, OMs)
+- Predicted SN1 and SN2 outcomes
 
 ### Quiz Mode
 

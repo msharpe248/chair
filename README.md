@@ -39,6 +39,34 @@ Master the anti-periplanar requirement for E2 eliminations.
 - **Zaitsev vs Hofmann**: Compare product predictions with different bases
 - **Classic Examples**: Menthyl vs neomenthyl chloride demonstrates the requirement
 
+### 4. Alkene Stability Viewer
+Compare relative stabilities of alkene isomers.
+
+- **Substitution Patterns**: Visualize mono-, di-, tri-, and tetrasubstituted alkenes
+- **Heat of Hydrogenation**: See ΔH values for each alkene type
+- **Hyperconjugation**: Understand why more substituted = more stable
+- **E/Z Isomers**: Compare cis vs trans (E vs Z) stabilities
+- **SMILES Input**: Enter your own alkene structures for analysis
+- **Quiz Mode**: Test your ability to rank alkene stabilities
+
+### 5. Stereochemistry Tracker
+Understand stereochemical outcomes of SN1 and SN2 reactions.
+
+- **SN2 Walden Inversion**: Animated mechanism showing backside attack and complete inversion
+- **SN1 Racemization**: See how planar carbocation leads to 50:50 product mixture
+- **Wedge-Dash Notation**: Clear stereochemical representations
+- **SMILES Input**: Analyze your own chiral molecules (use @/@@  for R/S configuration)
+- **Preset Molecules**: 2-bromobutane, lactic acid, and more
+
+### 6. Mechanism Animator
+Step through reaction mechanisms with electron-flow arrows.
+
+- **Substitution Mechanisms**: SN1 and SN2 with electron pushing
+- **Elimination Mechanisms**: E1 and E2 with orbital overlap visualization
+- **Addition Reactions**: HBr and Br₂ addition to alkenes
+- **Step-by-Step**: Navigate through each mechanistic step
+- **Electron Flow Arrows**: Curved arrows show electron movement
+
 ## Quick Start
 
 ```bash

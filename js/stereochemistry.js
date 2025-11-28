@@ -125,6 +125,178 @@ export const REACTION_OUTCOMES = {
 };
 
 /**
+ * Parse stereochemistry SMILES and analyze structure
+ * @param {string} smiles - SMILES string with stereochemistry notation
+ * @returns {Object} Analysis data
+ */
+export function parseStereoSMILES(smiles) {
+  if (!smiles || typeof smiles !== 'string') {
+    return { error: 'Please enter a valid SMILES string' };
+  }
+
+  const cleanSmiles = smiles.trim();
+
+  try {
+    const analysis = analyzeStereoSMILES(cleanSmiles);
+
+    if (analysis.error) {
+      return analysis;
+    }
+
+    // Determine leaving groups
+    const leavingGroups = identifyLeavingGroups(cleanSmiles);
+
+    // Predict reaction outcomes
+    const sn2Outcome = analysis.stereocenters.length > 0 ?
+      predictSN2Outcome(analysis.stereocenters[0].config) : null;
+    const sn1Outcome = 'Racemization (50% R + 50% S)';
+
+    return {
+      smiles: cleanSmiles,
+      stereocenters: analysis.stereocenters,
+      numStereocenters: analysis.stereocenters.length,
+      hasStereochemistry: analysis.stereocenters.length > 0,
+      leavingGroups: leavingGroups,
+      hasLeavingGroup: leavingGroups.length > 0,
+      sn2Outcome: sn2Outcome,
+      sn1Outcome: sn1Outcome,
+      explanation: getStereoExplanation(analysis, leavingGroups)
+    };
+  } catch (e) {
+    return { error: 'Could not parse SMILES: ' + e.message };
+  }
+}
+
+/**
+ * Analyze stereochemistry in SMILES
+ */
+function analyzeStereoSMILES(smiles) {
+  const stereocenters = [];
+
+  // Find all stereocenter markers (@ and @@)
+  // @@ = clockwise when looking from first substituent = R (typically)
+  // @ = counterclockwise = S (typically)
+  const stereoPattern = /\[C@@?H?\]/g;
+  let match;
+  let position = 0;
+
+  while ((match = stereoPattern.exec(smiles)) !== null) {
+    const marker = match[0];
+    const isDoubleAt = marker.includes('@@');
+
+    // In standard SMILES convention:
+    // @@ usually indicates R configuration
+    // @ usually indicates S configuration
+    const config = isDoubleAt ? 'R' : 'S';
+
+    stereocenters.push({
+      position: match.index,
+      marker: marker,
+      config: config,
+      carbonNumber: ++position
+    });
+  }
+
+  // Also check for @ and @@ without brackets (less common but valid)
+  const simplePattern = /[A-Z]@@?/g;
+  let simpleMatch;
+  while ((simpleMatch = simplePattern.exec(smiles)) !== null) {
+    if (!smiles.substring(simpleMatch.index - 1, simpleMatch.index + 3).includes('[')) {
+      const marker = simpleMatch[0];
+      if (marker.includes('@@') && marker.length > 2) {
+        stereocenters.push({
+          position: simpleMatch.index,
+          marker: marker,
+          config: 'R',
+          carbonNumber: ++position
+        });
+      } else if (marker.includes('@') && !marker.includes('@@')) {
+        stereocenters.push({
+          position: simpleMatch.index,
+          marker: marker,
+          config: 'S',
+          carbonNumber: ++position
+        });
+      }
+    }
+  }
+
+  // Remove duplicates based on position
+  const uniqueStereocenters = stereocenters.filter((sc, index, self) =>
+    index === self.findIndex(t => t.position === sc.position)
+  );
+
+  return {
+    stereocenters: uniqueStereocenters
+  };
+}
+
+/**
+ * Identify leaving groups in SMILES
+ */
+function identifyLeavingGroups(smiles) {
+  const leavingGroups = [];
+
+  // Common leaving groups
+  const lgPatterns = {
+    'Br': /Br/g,
+    'Cl': /Cl/g,
+    'I': /I/g,
+    'OTs': /OTs|OS\(=O\)\(=O\)c/gi,
+    'OMs': /OMs|OS\(=O\)\(=O\)C/gi,
+    'OTf': /OTf|OS\(=O\)\(=O\)C\(F\)\(F\)F/gi
+  };
+
+  for (const [lg, pattern] of Object.entries(lgPatterns)) {
+    if (pattern.test(smiles)) {
+      leavingGroups.push(lg);
+    }
+  }
+
+  return leavingGroups;
+}
+
+/**
+ * Predict SN2 outcome
+ */
+function predictSN2Outcome(startConfig) {
+  if (startConfig === 'R') {
+    return 'Inversion → S configuration';
+  } else if (startConfig === 'S') {
+    return 'Inversion → R configuration';
+  }
+  return 'Inversion (configuration flips)';
+}
+
+/**
+ * Get explanation for stereochemistry analysis
+ */
+function getStereoExplanation(analysis, leavingGroups) {
+  const explanations = [];
+
+  if (analysis.stereocenters.length === 0) {
+    explanations.push('No stereocenters detected (no @ or @@ in SMILES)');
+    explanations.push('Enter SMILES with stereochemistry notation, e.g., [C@@H] or [C@H]');
+  } else {
+    explanations.push(`Found ${analysis.stereocenters.length} stereocenter(s)`);
+
+    for (const sc of analysis.stereocenters) {
+      explanations.push(`Stereocenter ${sc.carbonNumber}: ${sc.config} configuration (${sc.marker})`);
+    }
+  }
+
+  if (leavingGroups.length > 0) {
+    explanations.push(`Leaving group(s) present: ${leavingGroups.join(', ')}`);
+    explanations.push('SN1: Would give racemization (planar carbocation)');
+    explanations.push('SN2: Would give inversion (backside attack)');
+  } else {
+    explanations.push('No common leaving groups detected');
+  }
+
+  return explanations;
+}
+
+/**
  * Calculate stereochemical outcome of a reaction
  * @param {string} moleculeKey - Starting material key
  * @param {string} reactionType - Type of reaction (SN1, SN2, E1, E2)

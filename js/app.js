@@ -33,9 +33,9 @@ import { analyzeReaction, getEnergyFromSMILES, REACTION_EXAMPLES } from './react
 import { generateEnergyQuestion, checkEnergyAnswer, resetEnergyQuiz, getEnergyQuizState } from './energy-quiz.js';
 import { E2_PRESETS, analyzeE2, generateE2Question } from './e2-stereo.js';
 import { renderE2Newman, getE2Analysis, E2_NEWMAN_CONFIGS } from './e2-newman.js';
-import { HYDROGENATION_DATA, COMPARISON_SETS, getStabilityRanking, generateAlkeneQuestion, checkAlkeneAnswer } from './alkene-stability.js';
+import { HYDROGENATION_DATA, COMPARISON_SETS, getStabilityRanking, generateAlkeneQuestion, checkAlkeneAnswer, parseAlkeneSMILES } from './alkene-stability.js';
 import { renderAlkeneComparison, renderHydrogenationDiagram } from './alkene-renderer.js';
-import { PRESET_MOLECULES, REACTION_OUTCOMES, calculateStereoOutcome, generateStereoQuestion, checkStereoAnswer } from './stereochemistry.js';
+import { PRESET_MOLECULES, REACTION_OUTCOMES, calculateStereoOutcome, generateStereoQuestion, checkStereoAnswer, parseStereoSMILES } from './stereochemistry.js';
 import { renderSN2Mechanism, renderSN1Mechanism, renderRelationshipDiagram } from './stereo-renderer.js';
 import { MECHANISMS, getMechanism, getStepData, generateMechanismQuestion, checkMechanismAnswer } from './mechanism-animator.js';
 import { renderMechanism, renderSN2Mechanism as renderMechSN2, renderSN1Mechanism as renderMechSN1, renderE2Mechanism as renderMechE2, renderAdditionMechanism, renderBrominationMechanism } from './mechanism-renderer.js';
@@ -456,6 +456,20 @@ function setupEventListeners() {
     checkbox.addEventListener('change', handleAlkeneCustomSelectionChange);
   });
 
+  // Alkene SMILES input
+  document.getElementById('alkene-analyze-btn').addEventListener('click', handleAlkeneSMILESAnalyze);
+  document.getElementById('alkene-smiles-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleAlkeneSMILESAnalyze();
+  });
+
+  // Alkene SMILES example buttons
+  document.querySelectorAll('#alkene-controls .example-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.getElementById('alkene-smiles-input').value = e.target.dataset.smiles;
+      handleAlkeneSMILESAnalyze();
+    });
+  });
+
   // Stereochemistry tracker controls
   document.getElementById('stereo-mode-select').addEventListener('change', handleStereoModeChange);
   document.getElementById('stereo-molecule-select').addEventListener('change', handleStereoMoleculeChange);
@@ -466,6 +480,20 @@ function setupEventListeners() {
   // Config toggle buttons
   document.querySelectorAll('.config-btn').forEach(btn => {
     btn.addEventListener('click', handleConfigToggle);
+  });
+
+  // Stereochemistry SMILES input
+  document.getElementById('stereo-analyze-btn').addEventListener('click', handleStereoSMILESAnalyze);
+  document.getElementById('stereo-smiles-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleStereoSMILESAnalyze();
+  });
+
+  // Stereochemistry SMILES example buttons
+  document.querySelectorAll('#stereo-controls .example-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.getElementById('stereo-smiles-input').value = e.target.dataset.smiles;
+      handleStereoSMILESAnalyze();
+    });
   });
 
   // Mechanism animator controls
@@ -1657,6 +1685,52 @@ function handleAlkeneCustomSelectionChange() {
 }
 
 /**
+ * Handle alkene SMILES analysis
+ */
+function handleAlkeneSMILESAnalyze() {
+  const input = document.getElementById('alkene-smiles-input');
+  const smiles = input.value.trim();
+
+  if (!smiles) {
+    alert('Please enter a SMILES string for an alkene');
+    return;
+  }
+
+  const result = parseAlkeneSMILES(smiles);
+  const resultPanel = document.getElementById('alkene-smiles-result');
+
+  if (result.error) {
+    resultPanel.classList.remove('hidden');
+    document.getElementById('alkene-result-smiles').textContent = smiles;
+    document.getElementById('alkene-result-class').textContent = 'Error';
+    document.getElementById('alkene-result-stereo').textContent = '—';
+    document.getElementById('alkene-result-dh').textContent = result.error;
+    document.getElementById('alkene-result-explanation').innerHTML = '';
+    return;
+  }
+
+  // Display the results
+  resultPanel.classList.remove('hidden');
+  document.getElementById('alkene-result-smiles').textContent = result.smiles;
+  document.getElementById('alkene-result-class').textContent =
+    result.substitution.charAt(0).toUpperCase() + result.substitution.slice(1) +
+    ` (${result.substituents} substituent${result.substituents !== 1 ? 's' : ''})`;
+  document.getElementById('alkene-result-stereo').textContent =
+    result.stereochemistry ? result.stereochemistry + ' isomer' : 'N/A (no stereochemistry)';
+  document.getElementById('alkene-result-dh').textContent = result.deltaH + ' kcal/mol';
+
+  // Display explanation
+  const explanationDiv = document.getElementById('alkene-result-explanation');
+  if (result.explanation && result.explanation.length > 0) {
+    explanationDiv.innerHTML = '<ul>' +
+      result.explanation.map(exp => `<li>${exp}</li>`).join('') +
+      '</ul>';
+  } else {
+    explanationDiv.innerHTML = '';
+  }
+}
+
+/**
  * Toggle alkene quiz mode
  */
 function toggleAlkeneQuizMode() {
@@ -1873,6 +1947,65 @@ function updateStereoPanel(mode) {
       <li>Different reactivity</li>
       <li>One may be meso (achiral despite stereocenters)</li>
     `;
+  }
+}
+
+/**
+ * Handle stereochemistry SMILES analysis
+ */
+function handleStereoSMILESAnalyze() {
+  const input = document.getElementById('stereo-smiles-input');
+  const smiles = input.value.trim();
+
+  if (!smiles) {
+    alert('Please enter a SMILES string with stereochemistry notation');
+    return;
+  }
+
+  const result = parseStereoSMILES(smiles);
+  const resultPanel = document.getElementById('stereo-smiles-result');
+
+  if (result.error) {
+    resultPanel.classList.remove('hidden');
+    document.getElementById('stereo-result-smiles').textContent = smiles;
+    document.getElementById('stereo-result-centers').textContent = 'Error';
+    document.getElementById('stereo-result-lg').textContent = '—';
+    document.getElementById('stereo-result-sn2').textContent = result.error;
+    document.getElementById('stereo-result-sn1').textContent = '—';
+    document.getElementById('stereo-result-explanation').innerHTML = '';
+    return;
+  }
+
+  // Display the results
+  resultPanel.classList.remove('hidden');
+  document.getElementById('stereo-result-smiles').textContent = result.smiles;
+
+  // Display stereocenters
+  if (result.stereocenters.length > 0) {
+    const centerStr = result.stereocenters
+      .map(sc => `${sc.config} (${sc.marker})`)
+      .join(', ');
+    document.getElementById('stereo-result-centers').textContent = centerStr;
+  } else {
+    document.getElementById('stereo-result-centers').textContent = 'None detected (use @/@@ notation)';
+  }
+
+  // Display leaving groups
+  document.getElementById('stereo-result-lg').textContent =
+    result.leavingGroups.length > 0 ? result.leavingGroups.join(', ') : 'None detected';
+
+  // Display SN2 and SN1 outcomes
+  document.getElementById('stereo-result-sn2').textContent = result.sn2Outcome || 'N/A';
+  document.getElementById('stereo-result-sn1').textContent = result.sn1Outcome;
+
+  // Display explanation
+  const explanationDiv = document.getElementById('stereo-result-explanation');
+  if (result.explanation && result.explanation.length > 0) {
+    explanationDiv.innerHTML = '<ul>' +
+      result.explanation.map(exp => `<li>${exp}</li>`).join('') +
+      '</ul>';
+  } else {
+    explanationDiv.innerHTML = '';
   }
 }
 
