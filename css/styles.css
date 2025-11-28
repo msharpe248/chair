@@ -127,14 +127,25 @@ main {
   pointer-events: all;
 }
 
-/* Zoom Controls */
+/* Canvas Controls (zoom + export) */
+.canvas-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding: 0 0.5rem;
+}
+
 .zoom-controls {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 0.5rem;
-  margin-top: 0.75rem;
-  padding-right: 0.5rem;
+}
+
+.export-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .zoom-controls button {
@@ -170,6 +181,24 @@ main {
   min-width: 45px;
   text-align: center;
   font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.export-controls button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border-color);
+  background: var(--surface);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.export-controls button:hover {
+  background: var(--background);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .controls {

@@ -137,6 +137,10 @@ function setupEventListeners() {
   chairContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
   chairContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
   chairContainer.addEventListener('touchend', handlePanEnd);
+
+  // Export controls
+  document.getElementById('export-png-btn').addEventListener('click', exportAsPNG);
+  document.getElementById('export-svg-btn').addEventListener('click', exportAsSVG);
 }
 
 /**
@@ -524,6 +528,168 @@ function handleTouchMove(e) {
   panX = touch.clientX - panStartX;
   panY = touch.clientY - panStartY;
   updateViewBox();
+}
+
+/**
+ * Export the current view as PNG
+ */
+function exportAsPNG() {
+  // Get the SVG element
+  const svgElement = document.getElementById('chair-svg');
+
+  // Clone the SVG to avoid modifying the original
+  const svgClone = svgElement.cloneNode(true);
+
+  // Reset transform for export (show at 100% zoom, centered)
+  svgClone.style.transform = '';
+
+  // Get SVG dimensions
+  const svgRect = svgElement.getBoundingClientRect();
+  const width = 800;  // Export at higher resolution
+  const height = 700;
+
+  // Set explicit dimensions on clone
+  svgClone.setAttribute('width', width);
+  svgClone.setAttribute('height', height);
+  svgClone.setAttribute('viewBox', '0 0 400 350');
+
+  // Add white background
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  bg.setAttribute('width', '100%');
+  bg.setAttribute('height', '100%');
+  bg.setAttribute('fill', 'white');
+  svgClone.insertBefore(bg, svgClone.firstChild);
+
+  // Add inline styles for export
+  addInlineStyles(svgClone);
+
+  // Convert to data URL
+  const svgData = new XMLSerializer().serializeToString(svgClone);
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const svgUrl = URL.createObjectURL(svgBlob);
+
+  // Create image and canvas for PNG conversion
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0);
+
+    // Download
+    const pngUrl = canvas.toDataURL('image/png');
+    downloadFile(pngUrl, getExportFilename('png'));
+
+    URL.revokeObjectURL(svgUrl);
+  };
+  img.src = svgUrl;
+}
+
+/**
+ * Export the current view as SVG
+ */
+function exportAsSVG() {
+  // Get the SVG element
+  const svgElement = document.getElementById('chair-svg');
+
+  // Clone the SVG
+  const svgClone = svgElement.cloneNode(true);
+
+  // Reset transform for export
+  svgClone.style.transform = '';
+  svgClone.setAttribute('width', '400');
+  svgClone.setAttribute('height', '350');
+  svgClone.setAttribute('viewBox', '0 0 400 350');
+
+  // Add white background
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  bg.setAttribute('width', '100%');
+  bg.setAttribute('height', '100%');
+  bg.setAttribute('fill', 'white');
+  svgClone.insertBefore(bg, svgClone.firstChild);
+
+  // Add inline styles for export
+  addInlineStyles(svgClone);
+
+  // Convert to blob and download
+  const svgData = new XMLSerializer().serializeToString(svgClone);
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const svgUrl = URL.createObjectURL(svgBlob);
+
+  downloadFile(svgUrl, getExportFilename('svg'));
+
+  setTimeout(() => URL.revokeObjectURL(svgUrl), 100);
+}
+
+/**
+ * Add inline styles to SVG elements for export
+ */
+function addInlineStyles(svgElement) {
+  // Style mappings for export
+  const styles = {
+    '.carbon-bond': { stroke: '#334155', 'stroke-width': '2.5', 'stroke-linecap': 'round' },
+    '.carbon-circle': { fill: '#f1f5f9', stroke: '#334155', 'stroke-width': '2' },
+    '.carbon-circle.bridgehead': { fill: '#fef3c7', stroke: '#d97706', 'stroke-width': '2.5' },
+    '.carbon-label': { 'font-size': '11px', 'font-weight': '600', fill: '#1e293b', 'font-family': 'sans-serif' },
+    '.oxygen-circle': { fill: '#fecaca', stroke: '#dc2626', 'stroke-width': '2' },
+    '.oxygen-label': { 'font-size': '12px', 'font-weight': '700', fill: '#dc2626', 'font-family': 'sans-serif' },
+    '.hydrogen-bond': { stroke: '#94a3b8', 'stroke-width': '2', 'stroke-linecap': 'round' },
+    '.explicit-bond': { stroke: '#334155', 'stroke-width': '2.5', 'stroke-linecap': 'round' },
+    '.explicit-label': { fill: '#dc2626', 'font-weight': '600', 'font-size': '13px', 'font-family': 'sans-serif' },
+    '.hydrogen-label': { fill: '#94a3b8', 'font-size': '10px', 'font-family': 'sans-serif' },
+    '.ax-eq-label': { 'font-size': '9px', fill: '#64748b', 'font-style': 'italic', 'font-family': 'sans-serif' },
+    '.sugar-label': { 'font-size': '14px', 'font-weight': '600', fill: '#1e293b', 'font-family': 'sans-serif' },
+    '.conformation-label': { 'font-size': '12px', fill: '#64748b', 'font-family': 'sans-serif' },
+    '.decalin-label': { 'font-size': '14px', 'font-weight': '600', fill: '#1e293b', 'font-family': 'sans-serif' },
+    '.ring-a-bond': { stroke: '#2563eb', 'stroke-width': '2.5', 'stroke-linecap': 'round' },
+    '.ring-b-bond': { stroke: '#059669', 'stroke-width': '2.5', 'stroke-linecap': 'round' },
+    '.bridging-bond': { stroke: '#334155', 'stroke-width': '3', 'stroke-linecap': 'round' },
+    '.oxygen-bond': { stroke: '#dc2626', 'stroke-width': '2.5', 'stroke-linecap': 'round' },
+  };
+
+  for (const [selector, styleObj] of Object.entries(styles)) {
+    const elements = svgElement.querySelectorAll(selector);
+    elements.forEach(el => {
+      for (const [prop, value] of Object.entries(styleObj)) {
+        el.style[prop] = value;
+      }
+    });
+  }
+}
+
+/**
+ * Generate filename for export
+ */
+function getExportFilename(extension) {
+  let name = 'chair';
+
+  if (currentMode === 'pyranose' && state.sugarType) {
+    name = `${state.anomer}-${state.sugarType}`;
+  } else if (currentMode === 'decalin') {
+    name = `${state.decalinType}-decalin`;
+  } else if (state.substituents && state.substituents.length > 0) {
+    name = 'substituted-cyclohexane';
+  } else {
+    name = 'cyclohexane';
+  }
+
+  return `${name}.${extension}`;
+}
+
+/**
+ * Trigger file download
+ */
+function downloadFile(url, filename) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 // Initialize when DOM is ready
