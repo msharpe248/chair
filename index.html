@@ -151,6 +151,29 @@
     </section>
 
     <aside class="info-panel">
+      <!-- Quiz Panel (shown when quiz mode active) -->
+      <div id="quiz-panel" class="quiz-panel hidden">
+        <div class="quiz-header">
+          <h3>Practice Quiz</h3>
+          <div class="quiz-score">Score: <span id="quiz-score">0/0</span></div>
+        </div>
+        <div class="quiz-difficulty">
+          <button class="difficulty-btn selected" data-level="1">Easy</button>
+          <button class="difficulty-btn" data-level="2">Medium</button>
+          <button class="difficulty-btn" data-level="3">Hard</button>
+        </div>
+        <div class="quiz-question-area">
+          <p id="quiz-question" class="quiz-question">Click "New Question" to start!</p>
+          <div id="quiz-options" class="quiz-options"></div>
+          <div id="quiz-feedback" class="quiz-feedback hidden"></div>
+        </div>
+        <div class="quiz-actions">
+          <button id="new-question-btn" class="primary-btn">New Question</button>
+          <button id="submit-answer-btn" class="primary-btn" disabled>Submit</button>
+          <button id="reset-quiz-btn" class="secondary-btn">Reset</button>
+        </div>
+      </div>
+
       <div id="energy-panel" class="energy-display">
         <h3>Energy Analysis</h3>
         <div class="energy-chart">
@@ -235,33 +258,6 @@
         <button id="add-substituent-btn">Add</button>
         <button id="remove-substituent-btn">Remove</button>
         <button id="cancel-picker-btn">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Quiz Modal -->
-  <div id="quiz-modal" class="quiz-modal hidden">
-    <div class="quiz-content">
-      <div class="quiz-header">
-        <h3>Practice Quiz</h3>
-        <div class="quiz-score">Score: <span id="quiz-score">0/0</span></div>
-        <button id="close-quiz-btn" class="close-btn">&times;</button>
-      </div>
-      <div class="quiz-difficulty">
-        <label>Difficulty:</label>
-        <button class="difficulty-btn selected" data-level="1">Easy</button>
-        <button class="difficulty-btn" data-level="2">Medium</button>
-        <button class="difficulty-btn" data-level="3">Hard</button>
-      </div>
-      <div class="quiz-question-area">
-        <p id="quiz-question" class="quiz-question">Click "New Question" to start!</p>
-        <div id="quiz-options" class="quiz-options"></div>
-        <div id="quiz-feedback" class="quiz-feedback hidden"></div>
-      </div>
-      <div class="quiz-actions">
-        <button id="new-question-btn" class="primary-btn">New Question</button>
-        <button id="submit-answer-btn" class="primary-btn" disabled>Submit</button>
-        <button id="reset-quiz-btn" class="secondary-btn">Reset Score</button>
       </div>
     </div>
   </div>

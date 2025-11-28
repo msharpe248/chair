@@ -296,8 +296,7 @@ function setupEventListeners() {
   document.getElementById('reset-rotation-btn').addEventListener('click', resetRotation);
 
   // Quiz controls
-  document.getElementById('quiz-mode-btn').addEventListener('click', openQuizModal);
-  document.getElementById('close-quiz-btn').addEventListener('click', closeQuizModal);
+  document.getElementById('quiz-mode-btn').addEventListener('click', toggleQuizMode);
   document.getElementById('new-question-btn').addEventListener('click', loadNewQuestion);
   document.getElementById('submit-answer-btn').addEventListener('click', submitQuizAnswer);
   document.getElementById('reset-quiz-btn').addEventListener('click', resetQuizScore);
@@ -309,13 +308,6 @@ function setupEventListeners() {
       document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
       e.target.classList.add('selected');
     });
-  });
-
-  // Close quiz modal when clicking outside
-  document.getElementById('quiz-modal').addEventListener('click', (e) => {
-    if (e.target.id === 'quiz-modal') {
-      closeQuizModal();
-    }
   });
 
   // Theme toggle
@@ -925,17 +917,24 @@ function handleTouchMove(e) {
 // ============== Quiz Functions ==============
 
 /**
- * Open quiz modal
+ * Toggle quiz mode on/off
  */
-function openQuizModal() {
-  document.getElementById('quiz-modal').classList.remove('hidden');
-}
+function toggleQuizMode() {
+  const quizPanel = document.getElementById('quiz-panel');
+  const quizBtn = document.getElementById('quiz-mode-btn');
+  const isActive = !quizPanel.classList.contains('hidden');
 
-/**
- * Close quiz modal
- */
-function closeQuizModal() {
-  document.getElementById('quiz-modal').classList.add('hidden');
+  if (isActive) {
+    // Turn off quiz mode
+    quizPanel.classList.add('hidden');
+    quizBtn.classList.remove('active');
+    quizBtn.textContent = 'Quiz Mode';
+  } else {
+    // Turn on quiz mode
+    quizPanel.classList.remove('hidden');
+    quizBtn.classList.add('active');
+    quizBtn.textContent = 'Exit Quiz';
+  }
 }
 
 /**
