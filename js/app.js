@@ -261,6 +261,12 @@ function init() {
     // Set up event listeners
     setupEventListeners();
 
+    // Reset viewer dropdown to 'chair' on page load for consistent state
+    // (browsers may remember previous selection on refresh)
+    const viewerSelect = document.getElementById('viewer-select');
+    viewerSelect.value = 'chair';
+    currentViewer = 'chair';
+
     // Initial render
     renderView();
     console.log('App initialized successfully');
