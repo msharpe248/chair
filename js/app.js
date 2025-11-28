@@ -2,7 +2,7 @@
  * Chair Conformation Viewer - Main Application
  *
  * Handles user interaction, state management, and coordinates
- * rendering and energy calculations.
+ * rendering and energy calculations for cyclohexane, pyranose, and decalin.
  */
 
 import {
@@ -14,7 +14,7 @@ import {
   resetMolecule
 } from './chair.js';
 
-import { renderChair, highlightCarbon, getSubstituentLabel } from './renderer.js';
+import { render, renderChair, highlightCarbon, getSubstituentLabel } from './renderer.js';
 
 import {
   compareConformations,
@@ -22,8 +22,12 @@ import {
   getPreferredDescription
 } from './energy.js';
 
+import { createPyranoseState, changeSugarType, toggleAnomer } from './pyranose.js';
+import { createDecalinState, canFlip, getDecalinInfo, toggleDecalinType } from './decalin.js';
+
 // Application State
 let state = createMoleculeState();
+let currentMode = 'cyclohexane';
 let selectedCarbon = null;
 let selectedPosition = 'axial';
 
@@ -45,13 +49,18 @@ function init() {
   setupEventListeners();
 
   // Initial render
-  render();
+  renderView();
 }
 
 /**
  * Set up all event listeners
  */
 function setupEventListeners() {
+  // Mode selector buttons
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => handleModeChange(e.target.dataset.mode));
+  });
+
   // Ring flip button
   document.getElementById('flip-btn').addEventListener('click', handleFlip);
 
@@ -59,7 +68,7 @@ function setupEventListeners() {
   document.getElementById('reset-btn').addEventListener('click', handleReset);
 
   // Show labels checkbox
-  showLabelsCheckbox.addEventListener('change', render);
+  showLabelsCheckbox.addEventListener('change', renderView);
 
   // Picker modal buttons
   document.getElementById('add-substituent-btn').addEventListener('click', handleAddSubstituent);
@@ -82,29 +91,145 @@ function setupEventListeners() {
     }
   });
 
-  // Mode buttons (for future pyranose/decalin support)
+  // Pyranose controls
+  document.getElementById('sugar-select').addEventListener('change', handleSugarChange);
+  document.getElementById('alpha-btn').addEventListener('click', () => handleAnomerChange('alpha'));
+  document.getElementById('beta-btn').addEventListener('click', () => handleAnomerChange('beta'));
+
+  // Decalin controls
+  document.getElementById('trans-btn').addEventListener('click', () => handleDecalinTypeChange('trans'));
+  document.getElementById('cis-btn').addEventListener('click', () => handleDecalinTypeChange('cis'));
+}
+
+/**
+ * Handle mode change (cyclohexane/pyranose/decalin)
+ */
+function handleModeChange(mode) {
+  if (mode === currentMode) return;
+
+  currentMode = mode;
+
+  // Update mode buttons
   document.querySelectorAll('.mode-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      // TODO: Handle mode change
-    });
+    btn.classList.toggle('active', btn.dataset.mode === mode);
   });
+
+  // Show/hide mode-specific controls
+  document.getElementById('cyclohexane-controls').classList.toggle('hidden', mode !== 'cyclohexane');
+  document.getElementById('pyranose-controls').classList.toggle('hidden', mode !== 'pyranose');
+  document.getElementById('decalin-controls').classList.toggle('hidden', mode !== 'decalin');
+
+  // Show/hide appropriate energy panels
+  document.getElementById('energy-panel').classList.toggle('hidden', mode === 'decalin');
+  document.getElementById('decalin-energy-panel').classList.toggle('hidden', mode !== 'decalin');
+
+  // Create appropriate state for the mode
+  switch (mode) {
+    case 'pyranose':
+      state = createPyranoseState('glucose', 'beta');
+      break;
+    case 'decalin':
+      state = createDecalinState('trans');
+      updateDecalinUI();
+      break;
+    case 'cyclohexane':
+    default:
+      state = createMoleculeState();
+      break;
+  }
+
+  renderView();
+}
+
+/**
+ * Handle sugar type change
+ */
+function handleSugarChange(e) {
+  state = changeSugarType(state, e.target.value);
+  renderView();
+}
+
+/**
+ * Handle anomer change (alpha/beta)
+ */
+function handleAnomerChange(anomer) {
+  if (state.anomer === anomer) return;
+
+  // Update UI
+  document.getElementById('alpha-btn').classList.toggle('selected', anomer === 'alpha');
+  document.getElementById('beta-btn').classList.toggle('selected', anomer === 'beta');
+
+  // Update state
+  state = createPyranoseState(state.sugarType, anomer);
+  renderView();
+}
+
+/**
+ * Handle decalin type change (cis/trans)
+ */
+function handleDecalinTypeChange(type) {
+  if (state.decalinType === type) return;
+
+  // Update UI
+  document.getElementById('trans-btn').classList.toggle('selected', type === 'trans');
+  document.getElementById('cis-btn').classList.toggle('selected', type === 'cis');
+
+  // Update state
+  state = createDecalinState(type);
+  updateDecalinUI();
+  renderView();
+}
+
+/**
+ * Update decalin-specific UI elements
+ */
+function updateDecalinUI() {
+  const info = getDecalinInfo(state.decalinType);
+
+  // Update info text
+  document.getElementById('decalin-info').textContent = info.description;
+
+  // Update flip button state
+  const flipBtn = document.getElementById('flip-btn');
+  flipBtn.disabled = !info.canFlip;
+
+  // Update energy panel
+  document.getElementById('decalin-stability').textContent =
+    state.decalinType === 'trans' ? 'Most stable' : 'Less stable';
+  document.getElementById('decalin-delta').textContent =
+    state.decalinType === 'trans' ? '2.7 kcal/mol more stable' : '2.7 kcal/mol less stable';
 }
 
 /**
  * Main render function
  */
-function render() {
+function renderView() {
   const showLabels = showLabelsCheckbox.checked;
 
-  renderChair(svg, state, {
+  render(svg, state, {
     showLabels,
-    onCarbonClick: handleCarbonClick
+    onCarbonClick: currentMode === 'cyclohexane' ? handleCarbonClick : null
   });
 
-  updateEnergyDisplay();
+  if (currentMode === 'cyclohexane') {
+    updateEnergyDisplay();
+  }
+
   updateSubstituentsList();
+  updateFlipButtonState();
+}
+
+/**
+ * Update flip button enabled state
+ */
+function updateFlipButtonState() {
+  const flipBtn = document.getElementById('flip-btn');
+
+  if (currentMode === 'decalin') {
+    flipBtn.disabled = !canFlip(state.decalinType);
+  } else {
+    flipBtn.disabled = false;
+  }
 }
 
 /**
@@ -170,7 +295,7 @@ function handleAddSubstituent() {
   const group = select.value;
 
   state = setSubstituent(state, selectedCarbon, selectedPosition, group);
-  render();
+  renderView();
   closePicker();
 }
 
@@ -181,7 +306,7 @@ function handleRemoveSubstituent() {
   if (selectedCarbon === null) return;
 
   state = removeSubstituent(state, selectedCarbon, selectedPosition);
-  render();
+  renderView();
   closePicker();
 }
 
@@ -189,22 +314,39 @@ function handleRemoveSubstituent() {
  * Handle ring flip
  */
 function handleFlip() {
-  state = flipChair(state);
-  render();
+  if (currentMode === 'decalin' && !canFlip(state.decalinType)) {
+    return;
+  }
+
+  state = { ...state, flipped: !state.flipped };
+  renderView();
 }
 
 /**
  * Handle reset
  */
 function handleReset() {
-  state = resetMolecule();
-  render();
+  switch (currentMode) {
+    case 'pyranose':
+      state = createPyranoseState(state.sugarType || 'glucose', state.anomer || 'beta');
+      break;
+    case 'decalin':
+      state = createDecalinState(state.decalinType || 'trans');
+      break;
+    case 'cyclohexane':
+    default:
+      state = resetMolecule();
+      break;
+  }
+  renderView();
 }
 
 /**
  * Update the energy display panel
  */
 function updateEnergyDisplay() {
+  if (currentMode !== 'cyclohexane') return;
+
   const comparison = compareConformations(state);
 
   document.getElementById('energy-current').textContent = formatEnergy(comparison.energyCurrent);
@@ -220,10 +362,20 @@ function updateSubstituentsList() {
   const list = document.getElementById('substituent-list');
   list.innerHTML = '';
 
+  if (currentMode === 'decalin') {
+    const li = document.createElement('li');
+    li.className = 'empty-message';
+    li.textContent = 'Decalin is shown as the parent hydrocarbon';
+    list.appendChild(li);
+    return;
+  }
+
   if (state.substituents.length === 0) {
     const li = document.createElement('li');
     li.className = 'empty-message';
-    li.textContent = 'Click a position on the chair to add substituents';
+    li.textContent = currentMode === 'cyclohexane'
+      ? 'Click a position on the chair to add substituents'
+      : 'Sugar template loaded';
     list.appendChild(li);
     return;
   }
@@ -234,7 +386,8 @@ function updateSubstituentsList() {
   for (const sub of sorted) {
     const li = document.createElement('li');
     const posLabel = sub.position === 'axial' ? 'ax' : 'eq';
-    li.textContent = `C${sub.carbonIndex + 1}: ${getSubstituentLabel(sub.group)} (${posLabel})`;
+    const carbonLabel = currentMode === 'pyranose' ? `C${sub.carbonIndex + 1}` : `C${sub.carbonIndex + 1}`;
+    li.textContent = `${carbonLabel}: ${getSubstituentLabel(sub.group)} (${posLabel})`;
     list.appendChild(li);
   }
 }

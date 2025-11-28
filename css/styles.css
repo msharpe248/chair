@@ -415,6 +415,149 @@ main {
   background: #475569;
 }
 
+/* Mode-specific controls */
+.mode-controls {
+  margin-bottom: 1rem;
+}
+
+.mode-controls.hidden {
+  display: none;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.control-row label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 60px;
+}
+
+.control-row select {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--surface);
+}
+
+.anomer-toggle,
+.decalin-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.anomer-btn,
+.decalin-btn {
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--border-color);
+  background: var(--surface);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.anomer-btn:hover,
+.decalin-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.anomer-btn.selected,
+.decalin-btn.selected {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.info-text {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 0.5rem;
+  background: var(--background);
+  border-radius: 4px;
+}
+
+/* Pyranose-specific SVG styles */
+.oxygen-circle {
+  fill: #fecaca;
+  stroke: #dc2626;
+  stroke-width: 2;
+}
+
+.oxygen-label {
+  font-size: 12px;
+  font-weight: 700;
+  fill: #dc2626;
+  pointer-events: none;
+}
+
+.oxygen-bond {
+  stroke: #dc2626;
+}
+
+.sugar-label {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+
+.conformation-label {
+  font-size: 12px;
+  fill: var(--text-secondary);
+}
+
+/* Decalin-specific SVG styles */
+.ring-a-bond {
+  stroke: #2563eb;
+}
+
+.ring-b-bond {
+  stroke: #059669;
+}
+
+.bridging-bond {
+  stroke: var(--bond-color);
+  stroke-width: 3;
+}
+
+.carbon-circle.bridgehead {
+  fill: #fef3c7;
+  stroke: #d97706;
+  stroke-width: 2.5;
+}
+
+.decalin-label {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+
+/* Hidden utility class */
+.hidden {
+  display: none !important;
+}
+
+/* Disabled button state */
+.controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.controls button:disabled:hover {
+  background: var(--primary-color);
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
   header {

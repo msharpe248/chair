@@ -18,6 +18,47 @@
 
   <main>
     <section class="viewer-section">
+      <!-- Mode-specific controls -->
+      <div id="cyclohexane-controls" class="mode-controls">
+        <!-- No extra controls for cyclohexane -->
+      </div>
+
+      <div id="pyranose-controls" class="mode-controls hidden">
+        <div class="control-row">
+          <label for="sugar-select">Sugar:</label>
+          <select id="sugar-select">
+            <option value="glucose">D-Glucose</option>
+            <option value="galactose">D-Galactose</option>
+            <option value="mannose">D-Mannose</option>
+            <option value="allose">D-Allose</option>
+            <option value="altrose">D-Altrose</option>
+            <option value="gulose">D-Gulose</option>
+            <option value="idose">D-Idose</option>
+            <option value="talose">D-Talose</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label>Anomer:</label>
+          <div class="anomer-toggle">
+            <button id="alpha-btn" class="anomer-btn">α (alpha)</button>
+            <button id="beta-btn" class="anomer-btn selected">β (beta)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="decalin-controls" class="mode-controls hidden">
+        <div class="control-row">
+          <label>Type:</label>
+          <div class="decalin-toggle">
+            <button id="trans-btn" class="decalin-btn selected">trans</button>
+            <button id="cis-btn" class="decalin-btn">cis</button>
+          </div>
+        </div>
+        <div id="decalin-info" class="info-text">
+          Bridgehead H's on opposite faces. Rigid - cannot ring flip.
+        </div>
+      </div>
+
       <div class="chair-container">
         <svg id="chair-svg" viewBox="0 0 400 350"></svg>
       </div>
@@ -32,7 +73,7 @@
     </section>
 
     <aside class="info-panel">
-      <div class="energy-display">
+      <div id="energy-panel" class="energy-display">
         <h3>Energy Analysis</h3>
         <div class="energy-row">
           <span>Current Chair:</span>
@@ -49,6 +90,18 @@
         <div class="energy-row">
           <span>Preferred:</span>
           <span id="preferred-chair">Neither</span>
+        </div>
+      </div>
+
+      <div id="decalin-energy-panel" class="energy-display hidden">
+        <h3>Decalin Info</h3>
+        <div class="energy-row">
+          <span>Relative Stability:</span>
+          <span id="decalin-stability">Most stable</span>
+        </div>
+        <div class="energy-row">
+          <span>vs other isomer:</span>
+          <span id="decalin-delta">—</span>
         </div>
       </div>
 
