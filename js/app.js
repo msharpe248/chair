@@ -26,6 +26,7 @@ import { createPyranoseState, changeSugarType, toggleAnomer } from './pyranose.j
 import { createDecalinState, canFlip, getDecalinInfo, toggleDecalinType } from './decalin.js';
 import { renderNewman } from './newman.js';
 import { generateQuestion, checkAnswer } from './quiz.js';
+import { parseCyclohexaneSMILES } from './smiles.js';
 
 // Application State
 let state = createMoleculeState();
@@ -241,6 +242,14 @@ function setupEventListeners() {
   // Preset selector
   document.getElementById('preset-select').addEventListener('change', handlePresetChange);
 
+  // SMILES input
+  document.getElementById('parse-smiles-btn').addEventListener('click', handleSMILESParse);
+  document.getElementById('smiles-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      handleSMILESParse();
+    }
+  });
+
   // View toggle (Chair/Newman)
   document.querySelectorAll('.view-btn').forEach(btn => {
     btn.addEventListener('click', (e) => handleViewChange(e.target.dataset.view));
@@ -412,6 +421,43 @@ function handlePresetChange(e) {
   for (const sub of preset.substituents) {
     state = setSubstituent(state, sub.carbonIndex, sub.position, sub.group);
   }
+
+  renderView();
+}
+
+/**
+ * Handle SMILES input parsing
+ */
+function handleSMILESParse() {
+  const input = document.getElementById('smiles-input');
+  const errorDiv = document.getElementById('smiles-error');
+  const smiles = input.value.trim();
+
+  // Clear previous error
+  errorDiv.classList.add('hidden');
+  errorDiv.textContent = '';
+
+  if (!smiles) {
+    return;
+  }
+
+  const result = parseCyclohexaneSMILES(smiles);
+
+  if (!result.success) {
+    errorDiv.textContent = result.error;
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+
+  // Apply the parsed substituents
+  state = createMoleculeState();
+
+  for (const sub of result.substituents) {
+    state = setSubstituent(state, sub.carbonIndex, sub.position, sub.group);
+  }
+
+  // Clear preset selection since we're using custom SMILES
+  document.getElementById('preset-select').value = '';
 
   renderView();
 }

@@ -665,6 +665,53 @@ main {
   background: var(--surface);
 }
 
+/* SMILES Input */
+.smiles-input-row {
+  flex-wrap: wrap;
+}
+
+.smiles-input {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  background: var(--surface);
+}
+
+.smiles-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.small-btn {
+  padding: 0.5rem 0.75rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.small-btn:hover {
+  background: var(--primary-hover);
+}
+
+.smiles-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #fef2f2;
+  border-radius: 4px;
+}
+
 .anomer-toggle,
 .decalin-toggle {
   display: flex;

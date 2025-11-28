@@ -9,11 +9,11 @@
 - [x] 3D View Toggle - Simple 3D rotation of the molecule
 - [x] Practice Quiz Mode - Random problems to test understanding
 - [x] Energy Diagram - Visual bar chart comparing conformer energies
+- [x] SMILES Input - Enter a SMILES string to generate the chair
 
 ## Pending
 
 ### Medium Priority
-- [ ] SMILES Input - Enter a SMILES string to generate the chair
 - [ ] Dark Mode - For late-night studying
 - [ ] Print-Friendly View - Clean output for worksheets
 

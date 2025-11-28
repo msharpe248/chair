@@ -34,6 +34,12 @@
             <option value="5">C6–C1</option>
           </select>
         </div>
+        <div class="control-row smiles-input-row">
+          <label for="smiles-input">SMILES:</label>
+          <input type="text" id="smiles-input" placeholder="e.g., CC1CCCCC1" class="smiles-input">
+          <button id="parse-smiles-btn" class="small-btn">Load</button>
+        </div>
+        <div id="smiles-error" class="smiles-error hidden"></div>
         <div class="control-row">
           <label for="preset-select">Example:</label>
           <select id="preset-select">
