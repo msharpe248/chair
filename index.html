@@ -14,13 +14,41 @@
       <button class="mode-btn" data-mode="pyranose">Sugar</button>
       <button class="mode-btn" data-mode="decalin">Decalin</button>
     </nav>
+    <a href="docs/index.html" class="help-link" title="Documentation">? Help</a>
   </header>
 
   <main>
     <section class="viewer-section">
       <!-- Mode-specific controls -->
       <div id="cyclohexane-controls" class="mode-controls">
-        <!-- No extra controls for cyclohexane -->
+        <div class="control-row">
+          <label for="preset-select">Example:</label>
+          <select id="preset-select">
+            <option value="">— Select a preset —</option>
+            <optgroup label="Single Substituent">
+              <option value="methyl-ax">Methylcyclohexane (axial)</option>
+              <option value="methyl-eq">Methylcyclohexane (equatorial)</option>
+              <option value="tbutyl-eq">tert-Butylcyclohexane</option>
+            </optgroup>
+            <optgroup label="1,2-Disubstituted">
+              <option value="1,2-dimethyl-cis">1,2-Dimethyl (cis)</option>
+              <option value="1,2-dimethyl-trans">1,2-Dimethyl (trans)</option>
+            </optgroup>
+            <optgroup label="1,3-Disubstituted">
+              <option value="1,3-dimethyl-cis">1,3-Dimethyl (cis)</option>
+              <option value="1,3-dimethyl-trans">1,3-Dimethyl (trans)</option>
+            </optgroup>
+            <optgroup label="1,4-Disubstituted">
+              <option value="1,4-dimethyl-cis">1,4-Dimethyl (cis)</option>
+              <option value="1,4-dimethyl-trans">1,4-Dimethyl (trans)</option>
+            </optgroup>
+            <optgroup label="Complex Examples">
+              <option value="menthol">Menthol-like (1,2,4-trisubstituted)</option>
+              <option value="all-axial">All Axial Methyl Groups</option>
+              <option value="all-equatorial">All Equatorial Methyl Groups</option>
+            </optgroup>
+          </select>
+        </div>
       </div>
 
       <div id="pyranose-controls" class="mode-controls hidden">
@@ -80,6 +108,10 @@
         <label class="checkbox-label">
           <input type="checkbox" id="show-labels" checked>
           Show Ax/Eq Labels
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="show-interactions">
+          Show 1,3-Diaxial
         </label>
       </div>
     </section>

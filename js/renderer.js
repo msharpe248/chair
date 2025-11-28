@@ -522,6 +522,113 @@ function renderSubstituent(parent, carbonIndex, position, group, flipped, showLa
 }
 
 /**
+ * Find 1,3-diaxial interactions between substituents
+ * @param {Object} state - The molecule state
+ * @returns {Array} Array of interaction objects with {pair: [i, j], groups: [g1, g2]}
+ */
+export function find13DiaxialInteractions(state) {
+  const interactions = [];
+
+  // 1,3-diaxial pairs: carbons that are 2 apart with same axial direction
+  // When not flipped: 0,2,4 point up (axialDir=-1), 1,3,5 point down (axialDir=1)
+  const upCarbons = state.flipped ? [1, 3, 5] : [0, 2, 4];
+  const downCarbons = state.flipped ? [0, 2, 4] : [1, 3, 5];
+
+  // Get axial substituents
+  const axialSubs = state.substituents.filter(s => s.position === 'axial');
+
+  // Check pairs on the same face
+  const checkPairs = (carbonSet) => {
+    for (let i = 0; i < carbonSet.length; i++) {
+      for (let j = i + 1; j < carbonSet.length; j++) {
+        const c1 = carbonSet[i];
+        const c2 = carbonSet[j];
+
+        const sub1 = axialSubs.find(s => s.carbonIndex === c1);
+        const sub2 = axialSubs.find(s => s.carbonIndex === c2);
+
+        // Both positions must have non-H substituents for significant interaction
+        if (sub1 && sub2) {
+          interactions.push({
+            pair: [c1, c2],
+            groups: [sub1.group, sub2.group]
+          });
+        }
+      }
+    }
+  };
+
+  checkPairs(upCarbons);
+  checkPairs(downCarbons);
+
+  return interactions;
+}
+
+/**
+ * Draw 1,3-diaxial interaction indicators
+ * @param {SVGElement} svg - The SVG element
+ * @param {Object} state - The molecule state
+ * @param {boolean} flipped - Whether the chair is flipped
+ */
+export function draw13DiaxialInteractions(svg, state, flipped) {
+  const interactions = find13DiaxialInteractions(state);
+
+  if (interactions.length === 0) return;
+
+  const interactionsGroup = createSVGElement('g', { class: 'interactions-group' });
+
+  for (const interaction of interactions) {
+    const [c1, c2] = interaction.pair;
+
+    // Get the axial substituent positions
+    const pos1 = getSubstituentPosition(c1, 'axial', flipped);
+    const pos2 = getSubstituentPosition(c2, 'axial', flipped);
+
+    // Draw a curved dashed line between the substituents
+    // Calculate control point for curve (midpoint, offset perpendicular to line)
+    const midX = (pos1.x + pos2.x) / 2;
+    const midY = (pos1.y + pos2.y) / 2;
+
+    // Calculate perpendicular offset
+    const dx = pos2.x - pos1.x;
+    const dy = pos2.y - pos1.y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+
+    // Offset perpendicular to line (towards the inside of the chair)
+    const offset = 25;
+    const perpX = (-dy / len) * offset;
+    const perpY = (dx / len) * offset;
+
+    // Control point
+    const ctrlX = midX + perpX;
+    const ctrlY = midY + perpY;
+
+    // Create curved path
+    const path = createSVGElement('path', {
+      d: `M ${pos1.x} ${pos1.y} Q ${ctrlX} ${ctrlY} ${pos2.x} ${pos2.y}`,
+      class: 'diaxial-interaction'
+    });
+    interactionsGroup.appendChild(path);
+
+    // Add small interaction symbol at midpoint
+    const labelX = midX + perpX * 0.6;
+    const labelY = midY + perpY * 0.6;
+
+    const interactionLabel = createSVGElement('text', {
+      x: labelX,
+      y: labelY,
+      class: 'diaxial-label',
+      'text-anchor': 'middle',
+      'dominant-baseline': 'middle'
+    });
+    interactionLabel.textContent = '1,3-diax';
+    interactionsGroup.appendChild(interactionLabel);
+  }
+
+  svg.appendChild(interactionsGroup);
+}
+
+/**
  * Highlight a carbon position (for hover/selection)
  * @param {SVGElement} svg - The SVG element
  * @param {number} carbonIndex - Carbon index to highlight (-1 to clear)

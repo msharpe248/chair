@@ -14,7 +14,7 @@ import {
   resetMolecule
 } from './chair.js';
 
-import { render, renderChair, highlightCarbon, getSubstituentLabel } from './renderer.js';
+import { render, renderChair, highlightCarbon, getSubstituentLabel, draw13DiaxialInteractions } from './renderer.js';
 
 import {
   compareConformations,
@@ -45,10 +45,115 @@ let isPanning = false;
 let panStartX = 0;
 let panStartY = 0;
 
+// Preset definitions for cyclohexane examples
+const PRESETS = {
+  // Single substituent
+  'methyl-ax': {
+    name: 'Methylcyclohexane (axial)',
+    substituents: [{ carbonIndex: 0, position: 'axial', group: 'CH3' }]
+  },
+  'methyl-eq': {
+    name: 'Methylcyclohexane (equatorial)',
+    substituents: [{ carbonIndex: 0, position: 'equatorial', group: 'CH3' }]
+  },
+  'tbutyl-eq': {
+    name: 'tert-Butylcyclohexane',
+    substituents: [{ carbonIndex: 0, position: 'equatorial', group: 'tBu' }]
+  },
+
+  // 1,2-disubstituted (carbons 0 and 1)
+  '1,2-dimethyl-cis': {
+    name: '1,2-Dimethylcyclohexane (cis)',
+    // cis = both on same face = one axial, one equatorial
+    substituents: [
+      { carbonIndex: 0, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 1, position: 'axial', group: 'CH3' }
+    ]
+  },
+  '1,2-dimethyl-trans': {
+    name: '1,2-Dimethylcyclohexane (trans)',
+    // trans = opposite faces = both equatorial (or both axial)
+    substituents: [
+      { carbonIndex: 0, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 1, position: 'equatorial', group: 'CH3' }
+    ]
+  },
+
+  // 1,3-disubstituted (carbons 0 and 2)
+  '1,3-dimethyl-cis': {
+    name: '1,3-Dimethylcyclohexane (cis)',
+    // cis 1,3 = same face = both equatorial (or both axial)
+    substituents: [
+      { carbonIndex: 0, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 2, position: 'equatorial', group: 'CH3' }
+    ]
+  },
+  '1,3-dimethyl-trans': {
+    name: '1,3-Dimethylcyclohexane (trans)',
+    // trans 1,3 = opposite faces = one axial, one equatorial
+    substituents: [
+      { carbonIndex: 0, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 2, position: 'axial', group: 'CH3' }
+    ]
+  },
+
+  // 1,4-disubstituted (carbons 0 and 3)
+  '1,4-dimethyl-cis': {
+    name: '1,4-Dimethylcyclohexane (cis)',
+    // cis 1,4 = same face = one axial, one equatorial
+    substituents: [
+      { carbonIndex: 0, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 3, position: 'axial', group: 'CH3' }
+    ]
+  },
+  '1,4-dimethyl-trans': {
+    name: '1,4-Dimethylcyclohexane (trans)',
+    // trans 1,4 = opposite faces = both equatorial (or both axial)
+    substituents: [
+      { carbonIndex: 0, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 3, position: 'equatorial', group: 'CH3' }
+    ]
+  },
+
+  // Complex examples
+  'menthol': {
+    name: 'Menthol-like pattern',
+    // 1-methyl, 2-isopropyl, 4-hydroxyl (all equatorial in preferred conformer)
+    substituents: [
+      { carbonIndex: 0, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 1, position: 'equatorial', group: 'iPr' },
+      { carbonIndex: 3, position: 'equatorial', group: 'OH' }
+    ]
+  },
+  'all-axial': {
+    name: 'All Axial Methyl Groups',
+    substituents: [
+      { carbonIndex: 0, position: 'axial', group: 'CH3' },
+      { carbonIndex: 1, position: 'axial', group: 'CH3' },
+      { carbonIndex: 2, position: 'axial', group: 'CH3' },
+      { carbonIndex: 3, position: 'axial', group: 'CH3' },
+      { carbonIndex: 4, position: 'axial', group: 'CH3' },
+      { carbonIndex: 5, position: 'axial', group: 'CH3' }
+    ]
+  },
+  'all-equatorial': {
+    name: 'All Equatorial Methyl Groups',
+    substituents: [
+      { carbonIndex: 0, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 1, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 2, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 3, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 4, position: 'equatorial', group: 'CH3' },
+      { carbonIndex: 5, position: 'equatorial', group: 'CH3' }
+    ]
+  }
+};
+
 // DOM Elements
 let svg;
 let picker;
 let showLabelsCheckbox;
+let showInteractionsCheckbox;
 
 /**
  * Initialize the application
@@ -58,6 +163,7 @@ function init() {
   svg = document.getElementById('chair-svg');
   picker = document.getElementById('substituent-picker');
   showLabelsCheckbox = document.getElementById('show-labels');
+  showInteractionsCheckbox = document.getElementById('show-interactions');
 
   // Set up event listeners
   setupEventListeners();
@@ -83,6 +189,9 @@ function setupEventListeners() {
 
   // Show labels checkbox
   showLabelsCheckbox.addEventListener('change', renderView);
+
+  // Show 1,3-diaxial interactions checkbox
+  showInteractionsCheckbox.addEventListener('change', renderView);
 
   // Picker modal buttons
   document.getElementById('add-substituent-btn').addEventListener('click', handleAddSubstituent);
@@ -113,6 +222,9 @@ function setupEventListeners() {
   // Decalin controls
   document.getElementById('trans-btn').addEventListener('click', () => handleDecalinTypeChange('trans'));
   document.getElementById('cis-btn').addEventListener('click', () => handleDecalinTypeChange('cis'));
+
+  // Preset selector
+  document.getElementById('preset-select').addEventListener('change', handlePresetChange);
 
   // Zoom controls
   document.getElementById('zoom-in-btn').addEventListener('click', () => handleZoom(ZOOM_STEP));
@@ -177,6 +289,8 @@ function handleModeChange(mode) {
     case 'cyclohexane':
     default:
       state = createMoleculeState();
+      // Reset preset dropdown
+      document.getElementById('preset-select').value = '';
       break;
   }
 
@@ -223,6 +337,27 @@ function handleDecalinTypeChange(type) {
 }
 
 /**
+ * Handle preset change
+ */
+function handlePresetChange(e) {
+  const presetKey = e.target.value;
+  if (!presetKey || !PRESETS[presetKey]) {
+    return;
+  }
+
+  const preset = PRESETS[presetKey];
+
+  // Create a fresh molecule state and apply the preset's substituents
+  state = createMoleculeState();
+
+  for (const sub of preset.substituents) {
+    state = setSubstituent(state, sub.carbonIndex, sub.position, sub.group);
+  }
+
+  renderView();
+}
+
+/**
  * Update decalin-specific UI elements
  */
 function updateDecalinUI() {
@@ -247,11 +382,17 @@ function updateDecalinUI() {
  */
 function renderView() {
   const showLabels = showLabelsCheckbox.checked;
+  const showInteractions = showInteractionsCheckbox.checked;
 
   render(svg, state, {
     showLabels,
     onCarbonClick: currentMode === 'cyclohexane' ? handleCarbonClick : null
   });
+
+  // Draw 1,3-diaxial interactions if enabled (cyclohexane mode only)
+  if (currentMode === 'cyclohexane' && showInteractions) {
+    draw13DiaxialInteractions(svg, state, state.flipped);
+  }
 
   if (currentMode === 'cyclohexane') {
     updateEnergyDisplay();
@@ -378,6 +519,8 @@ function handleReset() {
     case 'cyclohexane':
     default:
       state = resetMolecule();
+      // Reset preset dropdown
+      document.getElementById('preset-select').value = '';
       break;
   }
   renderView();
@@ -649,6 +792,8 @@ function addInlineStyles(svgElement) {
     '.ring-b-bond': { stroke: '#059669', 'stroke-width': '2.5', 'stroke-linecap': 'round' },
     '.bridging-bond': { stroke: '#334155', 'stroke-width': '3', 'stroke-linecap': 'round' },
     '.oxygen-bond': { stroke: '#dc2626', 'stroke-width': '2.5', 'stroke-linecap': 'round' },
+    '.diaxial-interaction': { fill: 'none', stroke: '#ef4444', 'stroke-width': '2', 'stroke-dasharray': '4 2', opacity: '0.7' },
+    '.diaxial-label': { 'font-size': '8px', fill: '#ef4444', 'font-weight': '500', 'font-family': 'sans-serif' },
   };
 
   for (const [selector, styleObj] of Object.entries(styles)) {
