@@ -240,8 +240,43 @@
               <option value="hydrogenation">Hydrogenation</option>
               <option value="exothermic">Exothermic (generic)</option>
               <option value="endothermic">Endothermic (generic)</option>
+              <option value="custom">Custom (adjustable)</option>
             </select>
           </div>
+
+          <!-- Custom Energy Sliders -->
+          <div id="custom-energy-controls" class="custom-energy-controls hidden">
+            <div class="slider-row">
+              <label for="ea-slider">Activation Energy (Ea):</label>
+              <input type="range" id="ea-slider" min="5" max="40" value="15" step="1">
+              <span id="ea-value" class="slider-value">15 kcal/mol</span>
+            </div>
+            <div class="slider-row">
+              <label for="delta-h-slider">ΔH (Product Energy):</label>
+              <input type="range" id="delta-h-slider" min="-30" max="20" value="-5" step="1">
+              <span id="delta-h-value" class="slider-value">-5 kcal/mol</span>
+            </div>
+            <div class="slider-row">
+              <label>
+                <input type="checkbox" id="two-step-checkbox">
+                Two-step mechanism
+              </label>
+            </div>
+            <div id="step2-controls" class="step2-controls hidden">
+              <div class="slider-row">
+                <label for="int-slider">Intermediate Energy:</label>
+                <input type="range" id="int-slider" min="0" max="25" value="12" step="1">
+                <span id="int-value" class="slider-value">12 kcal/mol</span>
+              </div>
+              <div class="slider-row">
+                <label for="ea2-slider">Second Ea:</label>
+                <input type="range" id="ea2-slider" min="2" max="20" value="5" step="1">
+                <span id="ea2-value" class="slider-value">5 kcal/mol</span>
+              </div>
+            </div>
+            <p class="drag-hint">Tip: Drag points on the diagram to adjust values</p>
+          </div>
+
           <div class="control-row energy-buttons">
             <button id="add-curve-btn" class="small-btn">+ Add Curve</button>
             <button id="clear-curves-btn" class="small-btn">Clear All</button>

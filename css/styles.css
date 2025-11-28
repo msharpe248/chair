@@ -598,6 +598,125 @@ header h1 {
   flex: 1;
 }
 
+/* Custom Energy Controls */
+.custom-energy-controls {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.75rem;
+}
+
+.custom-energy-controls.hidden {
+  display: none;
+}
+
+.slider-row {
+  margin-bottom: 0.75rem;
+}
+
+.slider-row:last-of-type {
+  margin-bottom: 0.5rem;
+}
+
+.slider-row label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.slider-row input[type="range"] {
+  width: calc(100% - 80px);
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border-color);
+  border-radius: 3px;
+  outline: none;
+  vertical-align: middle;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: grab;
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.slider-row input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: grab;
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.slider-row input[type="range"]:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+
+.slider-value {
+  display: inline-block;
+  width: 75px;
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--primary-color);
+  font-weight: 500;
+  vertical-align: middle;
+  margin-left: 5px;
+}
+
+.slider-row input[type="checkbox"] {
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+.slider-row label:has(input[type="checkbox"]) {
+  display: inline;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.step2-controls {
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.step2-controls.hidden {
+  display: none;
+}
+
+.drag-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0.5rem 0 0 0;
+}
+
+/* Draggable point styles (added via JS) */
+.draggable-point {
+  cursor: grab;
+  transition: r 0.15s ease;
+}
+
+.draggable-point:hover {
+  r: 8;
+}
+
+.draggable-point.dragging {
+  cursor: grabbing;
+  r: 9;
+}
+
 .mode-btn {
   padding: 0.5rem 1rem;
   border: 1px solid var(--border-color);

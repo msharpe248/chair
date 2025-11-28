@@ -69,6 +69,15 @@ export const REACTION_PRESETS = {
     intermediateE: [],
     productE: 10,
     description: 'Products higher in energy'
+  },
+  custom: {
+    name: 'Custom',
+    steps: 1,
+    startE: 0,
+    tsE: [15],
+    intermediateE: [],
+    productE: -5,
+    description: 'User-adjustable diagram'
   }
 };
 
@@ -421,5 +430,283 @@ export function getEnergyInfo(preset) {
     ea: ea,
     deltaH: deltaH,
     steps: config.steps
+  };
+}
+
+/**
+ * Render interactive energy diagram with draggable points
+ * @param {SVGElement} svg - The SVG element to render to
+ * @param {Object} config - Configuration with energy values
+ * @param {Function} onDrag - Callback when a point is dragged (pointType, newValue)
+ */
+export function renderInteractiveEnergyDiagram(svg, config, onDrag) {
+  svg.innerHTML = '';
+  const svgNS = 'http://www.w3.org/2000/svg';
+
+  // Chart dimensions (within 400x350 viewBox)
+  const margin = { top: 30, right: 30, bottom: 50, left: 60 };
+  const chartWidth = 400 - margin.left - margin.right;
+  const chartHeight = 350 - margin.top - margin.bottom;
+
+  // Calculate energy scale based on config
+  const allEnergies = [0, config.productE, ...config.tsE];
+  if (config.intermediateE && config.intermediateE.length > 0) {
+    allEnergies.push(...config.intermediateE);
+  }
+  let minE = Math.min(...allEnergies);
+  let maxE = Math.max(...allEnergies);
+
+  // Add padding
+  const range = maxE - minE || 40;
+  minE = Math.min(minE - range * 0.15, -5);
+  maxE = Math.max(maxE + range * 0.15, 30);
+
+  // Create group for chart area
+  const chartGroup = document.createElementNS(svgNS, 'g');
+  chartGroup.setAttribute('transform', `translate(${margin.left}, ${margin.top})`);
+  svg.appendChild(chartGroup);
+
+  // Draw axes
+  drawAxes(chartGroup, chartWidth, chartHeight, minE, maxE);
+
+  // Helper to convert energy to y coordinate
+  const energyToY = (e) => chartHeight * (maxE - e) / (maxE - minE);
+  // Helper to convert y coordinate to energy
+  const yToEnergy = (y) => maxE - (y / chartHeight) * (maxE - minE);
+
+  // Build curve points
+  const points = [];
+  const numSteps = config.steps || 1;
+
+  // Starting point
+  const startX = 30;
+  const startY = energyToY(0);
+  points.push({ x: startX, y: startY, label: 'SM', energy: 0, type: 'start' });
+
+  // Calculate segment width
+  const endX = chartWidth - 30;
+  const totalWidth = endX - startX;
+
+  if (numSteps === 1) {
+    // Single transition state
+    const tsX = startX + totalWidth / 2;
+    const tsY = energyToY(config.tsE[0]);
+    points.push({ x: tsX, y: tsY, label: 'TS', energy: config.tsE[0], isTS: true, type: 'ts1', draggable: true });
+  } else {
+    // Two-step mechanism
+    const segmentWidth = totalWidth / 4;
+
+    // First TS
+    const ts1X = startX + segmentWidth;
+    const ts1Y = energyToY(config.tsE[0]);
+    points.push({ x: ts1X, y: ts1Y, label: 'TS1', energy: config.tsE[0], isTS: true, type: 'ts1', draggable: true });
+
+    // Intermediate
+    const intX = startX + segmentWidth * 2;
+    const intY = energyToY(config.intermediateE[0]);
+    points.push({ x: intX, y: intY, label: 'Int', energy: config.intermediateE[0], type: 'int', draggable: true });
+
+    // Second TS (relative to intermediate)
+    const ts2X = startX + segmentWidth * 3;
+    const ts2E = config.intermediateE[0] + config.tsE[1];
+    const ts2Y = energyToY(ts2E);
+    points.push({ x: ts2X, y: ts2Y, label: 'TS2', energy: ts2E, isTS: true, type: 'ts2', draggable: true });
+  }
+
+  // Product
+  const productY = energyToY(config.productE);
+  points.push({ x: endX, y: productY, label: 'P', energy: config.productE, type: 'product', draggable: true });
+
+  // Draw smooth curve through points
+  const path = document.createElementNS(svgNS, 'path');
+  const d = buildSmoothPath(points);
+  path.setAttribute('d', d);
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', '#2563eb');
+  path.setAttribute('stroke-width', '3');
+  path.setAttribute('stroke-linecap', 'round');
+  chartGroup.appendChild(path);
+
+  // Draw dashed lines for activation energy
+  const startPt = points[0];
+  const tsPt = points.find(p => p.type === 'ts1');
+  if (tsPt) {
+    // Horizontal dashed line from start to under TS
+    const hLine = document.createElementNS(svgNS, 'line');
+    hLine.setAttribute('x1', startPt.x);
+    hLine.setAttribute('y1', startPt.y);
+    hLine.setAttribute('x2', tsPt.x);
+    hLine.setAttribute('y2', startPt.y);
+    hLine.setAttribute('stroke', '#2563eb');
+    hLine.setAttribute('stroke-width', '1');
+    hLine.setAttribute('stroke-dasharray', '4,4');
+    hLine.setAttribute('opacity', '0.5');
+    chartGroup.appendChild(hLine);
+
+    // Vertical line for Ea
+    const vLine = document.createElementNS(svgNS, 'line');
+    vLine.setAttribute('x1', tsPt.x);
+    vLine.setAttribute('y1', startPt.y);
+    vLine.setAttribute('x2', tsPt.x);
+    vLine.setAttribute('y2', tsPt.y);
+    vLine.setAttribute('stroke', '#2563eb');
+    vLine.setAttribute('stroke-width', '1');
+    vLine.setAttribute('stroke-dasharray', '4,4');
+    vLine.setAttribute('opacity', '0.5');
+    chartGroup.appendChild(vLine);
+
+    // Ea label
+    const eaLabel = document.createElementNS(svgNS, 'text');
+    eaLabel.setAttribute('x', tsPt.x + 8);
+    eaLabel.setAttribute('y', (startPt.y + tsPt.y) / 2 + 4);
+    eaLabel.setAttribute('fill', '#2563eb');
+    eaLabel.setAttribute('font-size', '10');
+    eaLabel.textContent = `Ea=${Math.round(tsPt.energy)}`;
+    chartGroup.appendChild(eaLabel);
+  }
+
+  // Draw points and labels (draggable ones last so they're on top)
+  points.forEach(pt => {
+    // Label
+    const label = document.createElementNS(svgNS, 'text');
+    label.setAttribute('x', pt.x);
+    label.setAttribute('y', pt.isTS ? pt.y - 15 : pt.y + 20);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('fill', 'var(--text-primary)');
+    label.setAttribute('font-size', '11');
+    label.setAttribute('font-weight', '500');
+    label.textContent = pt.label;
+    chartGroup.appendChild(label);
+
+    // Point circle
+    const circle = document.createElementNS(svgNS, 'circle');
+    circle.setAttribute('cx', pt.x);
+    circle.setAttribute('cy', pt.y);
+    circle.setAttribute('r', pt.draggable ? '7' : '4');
+    circle.setAttribute('stroke', '#2563eb');
+    circle.setAttribute('stroke-width', '2');
+
+    if (pt.draggable) {
+      circle.setAttribute('fill', '#2563eb');
+      circle.setAttribute('class', 'draggable-point');
+      circle.setAttribute('data-type', pt.type);
+      circle.style.cursor = 'grab';
+
+      // Add drag functionality
+      setupDragBehavior(circle, svg, chartGroup, pt, energyToY, yToEnergy, onDrag, config);
+    } else {
+      circle.setAttribute('fill', 'var(--surface)');
+    }
+
+    chartGroup.appendChild(circle);
+  });
+}
+
+/**
+ * Set up drag behavior for a draggable point
+ */
+function setupDragBehavior(circle, svg, chartGroup, pt, energyToY, yToEnergy, onDrag, config) {
+  let isDragging = false;
+  let startY = 0;
+
+  const onMouseDown = (e) => {
+    e.preventDefault();
+    isDragging = true;
+    startY = e.clientY;
+    circle.classList.add('dragging');
+    circle.style.cursor = 'grabbing';
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const onMouseMove = (e) => {
+    if (!isDragging) return;
+
+    // Get SVG coordinates
+    const svgRect = svg.getBoundingClientRect();
+    const scale = 400 / svgRect.width; // viewBox is 400 wide
+    const localY = (e.clientY - svgRect.top) * scale - 30; // subtract margin.top
+
+    // Convert to energy and clamp
+    let newEnergy = yToEnergy(localY);
+
+    // Apply constraints based on point type
+    if (pt.type === 'ts1') {
+      // TS1 must be above starting material (0)
+      newEnergy = Math.max(5, Math.min(40, newEnergy));
+    } else if (pt.type === 'ts2') {
+      // TS2 energy is relative to intermediate
+      const intE = config.intermediateE[0];
+      newEnergy = Math.max(intE + 2, Math.min(intE + 20, newEnergy));
+    } else if (pt.type === 'int') {
+      // Intermediate must be below TS1 and above or equal to 0
+      newEnergy = Math.max(0, Math.min(config.tsE[0] - 2, newEnergy));
+    } else if (pt.type === 'product') {
+      // Product can be anywhere in reasonable range
+      newEnergy = Math.max(-30, Math.min(20, newEnergy));
+    }
+
+    newEnergy = Math.round(newEnergy);
+
+    // Update circle position
+    const newY = energyToY(newEnergy);
+    circle.setAttribute('cy', newY);
+
+    // Callback with new value
+    if (onDrag) {
+      onDrag(pt.type, newEnergy);
+    }
+  };
+
+  const onMouseUp = () => {
+    isDragging = false;
+    circle.classList.remove('dragging');
+    circle.style.cursor = 'grab';
+
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  };
+
+  circle.addEventListener('mousedown', onMouseDown);
+
+  // Touch support
+  circle.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    onMouseDown({ clientY: touch.clientY, preventDefault: () => {} });
+  });
+
+  circle.addEventListener('touchmove', (e) => {
+    const touch = e.touches[0];
+    onMouseMove({ clientY: touch.clientY });
+  });
+
+  circle.addEventListener('touchend', onMouseUp);
+}
+
+/**
+ * Create a custom config object from slider values
+ */
+export function createCustomConfig(ea, deltaH, twoStep = false, intE = 12, ea2 = 5) {
+  if (twoStep) {
+    return {
+      name: 'Custom (2-step)',
+      steps: 2,
+      startE: 0,
+      tsE: [ea, ea2],
+      intermediateE: [intE],
+      productE: deltaH,
+      description: 'User-defined two-step mechanism'
+    };
+  }
+  return {
+    name: 'Custom (1-step)',
+    steps: 1,
+    startE: 0,
+    tsE: [ea],
+    intermediateE: [],
+    productE: deltaH,
+    description: 'User-defined one-step mechanism'
   };
 }

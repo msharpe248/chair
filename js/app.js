@@ -27,7 +27,7 @@ import { createDecalinState, canFlip, getDecalinInfo, toggleDecalinType } from '
 import { renderNewman } from './newman.js';
 import { generateQuestion, checkAnswer } from './quiz.js';
 import { parseCyclohexaneSMILES } from './smiles.js';
-import { renderEnergyDiagram as renderEnergyDiagramSVG, REACTION_PRESETS, getEnergyInfo } from './energy-diagram.js';
+import { renderEnergyDiagram as renderEnergyDiagramSVG, REACTION_PRESETS, getEnergyInfo, renderInteractiveEnergyDiagram, createCustomConfig } from './energy-diagram.js';
 import { predictMechanism, getMechanismEnergy, explainPrediction, getCompetingMechanisms } from './reaction-predictor.js';
 import { analyzeReaction, getEnergyFromSMILES, REACTION_EXAMPLES } from './reaction-smiles.js';
 import { generateEnergyQuestion, checkEnergyAnswer, resetEnergyQuiz, getEnergyQuizState } from './energy-quiz.js';
@@ -78,6 +78,15 @@ let currentPrediction = null;
 // Energy quiz state
 let energyQuizActive = false;
 let currentEnergyQuestion = null;
+
+// Custom energy diagram state
+let customEnergyConfig = {
+  ea: 15,
+  deltaH: -5,
+  twoStep: false,
+  intE: 12,
+  ea2: 5
+};
 let selectedEnergyAnswer = null;
 
 // Preset definitions for cyclohexane examples
@@ -336,6 +345,13 @@ function setupEventListeners() {
   document.getElementById('reaction-preset').addEventListener('change', handleReactionPresetChange);
   document.getElementById('add-curve-btn').addEventListener('click', handleAddCurve);
   document.getElementById('clear-curves-btn').addEventListener('click', handleClearCurves);
+
+  // Custom energy diagram sliders
+  document.getElementById('ea-slider').addEventListener('input', handleEaSliderChange);
+  document.getElementById('delta-h-slider').addEventListener('input', handleDeltaHSliderChange);
+  document.getElementById('two-step-checkbox').addEventListener('change', handleTwoStepToggle);
+  document.getElementById('int-slider').addEventListener('input', handleIntSliderChange);
+  document.getElementById('ea2-slider').addEventListener('input', handleEa2SliderChange);
 
   // Energy mode toggle (predict vs preset)
   document.querySelectorAll('.energy-mode-btn').forEach(btn => {
@@ -1260,14 +1276,105 @@ function handleReactionPresetChange(e) {
   const preset = e.target.value;
   selectedReactionPreset = preset;
 
-  // Update the first curve or add if empty
-  if (energyCurves.length === 0) {
-    energyCurves = [{ preset: preset, name: REACTION_PRESETS[preset].name }];
+  // Show/hide custom controls
+  const customControls = document.getElementById('custom-energy-controls');
+  customControls.classList.toggle('hidden', preset !== 'custom');
+
+  if (preset === 'custom') {
+    // Render interactive diagram for custom preset
+    renderCustomEnergyDiagram();
   } else {
-    energyCurves[0] = { preset: preset, name: REACTION_PRESETS[preset].name };
+    // Update the first curve or add if empty
+    if (energyCurves.length === 0) {
+      energyCurves = [{ preset: preset, name: REACTION_PRESETS[preset].name }];
+    } else {
+      energyCurves[0] = { preset: preset, name: REACTION_PRESETS[preset].name };
+    }
+
+    renderEnergyDiagram();
+  }
+}
+
+/**
+ * Render custom energy diagram with interactive controls
+ */
+function renderCustomEnergyDiagram() {
+  const svg = document.getElementById('chair-svg');
+  const config = createCustomConfig(
+    customEnergyConfig.ea,
+    customEnergyConfig.deltaH,
+    customEnergyConfig.twoStep,
+    customEnergyConfig.intE,
+    customEnergyConfig.ea2
+  );
+
+  renderInteractiveEnergyDiagram(svg, config, handleDragPoint);
+}
+
+/**
+ * Handle dragging a point on the custom energy diagram
+ */
+function handleDragPoint(pointType, newEnergy) {
+  switch (pointType) {
+    case 'ts1':
+      customEnergyConfig.ea = newEnergy;
+      document.getElementById('ea-slider').value = newEnergy;
+      document.getElementById('ea-value').textContent = `${newEnergy} kcal/mol`;
+      break;
+    case 'product':
+      customEnergyConfig.deltaH = newEnergy;
+      document.getElementById('delta-h-slider').value = newEnergy;
+      document.getElementById('delta-h-value').textContent = `${newEnergy} kcal/mol`;
+      break;
+    case 'int':
+      customEnergyConfig.intE = newEnergy;
+      document.getElementById('int-slider').value = newEnergy;
+      document.getElementById('int-value').textContent = `${newEnergy} kcal/mol`;
+      break;
+    case 'ts2':
+      // ts2 energy is intermediate + ea2, so calculate ea2
+      const ea2 = newEnergy - customEnergyConfig.intE;
+      customEnergyConfig.ea2 = ea2;
+      document.getElementById('ea2-slider').value = ea2;
+      document.getElementById('ea2-value').textContent = `${ea2} kcal/mol`;
+      break;
   }
 
-  renderEnergyDiagram();
+  // Re-render without full reset to avoid drag interruption
+  // The drag handler updates the circle position directly
+}
+
+/**
+ * Handle slider changes for custom energy diagram
+ */
+function handleEaSliderChange(e) {
+  customEnergyConfig.ea = parseInt(e.target.value);
+  document.getElementById('ea-value').textContent = `${customEnergyConfig.ea} kcal/mol`;
+  renderCustomEnergyDiagram();
+}
+
+function handleDeltaHSliderChange(e) {
+  customEnergyConfig.deltaH = parseInt(e.target.value);
+  document.getElementById('delta-h-value').textContent = `${customEnergyConfig.deltaH} kcal/mol`;
+  renderCustomEnergyDiagram();
+}
+
+function handleTwoStepToggle(e) {
+  customEnergyConfig.twoStep = e.target.checked;
+  document.getElementById('step2-controls').classList.toggle('hidden', !customEnergyConfig.twoStep);
+  renderCustomEnergyDiagram();
+}
+
+function handleIntSliderChange(e) {
+  customEnergyConfig.intE = parseInt(e.target.value);
+  document.getElementById('int-value').textContent = `${customEnergyConfig.intE} kcal/mol`;
+  renderCustomEnergyDiagram();
+}
+
+function handleEa2SliderChange(e) {
+  customEnergyConfig.ea2 = parseInt(e.target.value);
+  document.getElementById('ea2-value').textContent = `${customEnergyConfig.ea2} kcal/mol`;
+  renderCustomEnergyDiagram();
 }
 
 /**
@@ -1280,6 +1387,13 @@ function handleAddCurve() {
   }
 
   const preset = document.getElementById('reaction-preset').value;
+
+  // Don't allow adding custom as a comparison curve
+  if (preset === 'custom') {
+    alert('Custom diagram cannot be added for comparison. Select a preset reaction.');
+    return;
+  }
+
   energyCurves.push({
     preset: preset,
     name: `${REACTION_PRESETS[preset].name} (${energyCurves.length + 1})`
@@ -1314,6 +1428,14 @@ function handleEnergyModeToggle(e) {
   document.getElementById('predict-controls').classList.toggle('hidden', mode !== 'predict');
   document.getElementById('smiles-controls').classList.toggle('hidden', mode !== 'smiles');
   document.getElementById('preset-controls').classList.toggle('hidden', mode !== 'preset');
+
+  // Hide custom energy controls when switching modes
+  document.getElementById('custom-energy-controls').classList.add('hidden');
+  // Reset preset dropdown to non-custom value if switching away
+  if (mode === 'preset') {
+    document.getElementById('reaction-preset').value = 'sn2';
+    selectedReactionPreset = 'sn2';
+  }
 
   // Show/hide appropriate panels
   document.getElementById('prediction-result').classList.toggle('hidden', mode !== 'predict');

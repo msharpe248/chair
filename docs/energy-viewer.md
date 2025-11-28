@@ -112,6 +112,7 @@ Quickly view standard energy diagram shapes without calculations.
 | Hydrogenation | 1 | Single TS, highly exothermic |
 | Exothermic | 1 | Generic downhill reaction |
 | Endothermic | 1 | Generic uphill reaction |
+| **Custom** | 1-2 | **Interactive, adjustable diagram** |
 
 #### Comparing Presets
 
@@ -119,6 +120,37 @@ Quickly view standard energy diagram shapes without calculations.
 2. Click **"+ Add Curve"** to overlay additional reactions
 3. Each curve appears in a different color with a legend
 4. Compare Ea values and reaction profiles visually
+
+### Custom (Interactive) Mode
+
+Create your own energy diagrams with adjustable parameters.
+
+#### Using Custom Mode
+
+1. Select **"Custom (adjustable)"** from the Preset dropdown
+2. The **slider controls** will appear:
+   - **Activation Energy (Ea)**: Adjust the height of the transition state (5-40 kcal/mol)
+   - **ΔH (Product Energy)**: Set the energy of products relative to reactants (-30 to +20 kcal/mol)
+   - **Two-step mechanism**: Toggle to add an intermediate and second transition state
+
+#### Interactive Dragging
+
+You can also **drag the points directly** on the diagram:
+- **Drag the TS point** up/down to adjust activation energy
+- **Drag the Product point** to change ΔH
+- For two-step mechanisms, drag the **Intermediate** and **TS2** points
+
+The sliders update automatically as you drag, and vice versa.
+
+#### Two-Step Mechanisms
+
+When enabled:
+- **Intermediate Energy**: Set the energy of the carbocation/intermediate
+- **Second Ea**: Set the activation energy for the second step (relative to intermediate)
+
+This is useful for understanding:
+- How intermediate stability affects the reaction profile
+- Why the first step is typically rate-determining in SN1/E1
 
 ## Quiz Mode
 
