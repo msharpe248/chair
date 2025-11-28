@@ -12,6 +12,7 @@
       <select id="viewer-select">
         <option value="chair">Chair Conformation Viewer</option>
         <option value="energy">Reaction Energy Diagram</option>
+        <option value="e2">E2 Stereochemistry</option>
       </select>
     </div>
     <nav id="chair-mode-selector" class="mode-selector">
@@ -284,6 +285,46 @@
         </div>
       </div>
 
+      <!-- E2 Stereochemistry Controls (hidden by default) -->
+      <div id="e2-controls" class="mode-controls hidden">
+        <div class="control-row">
+          <label for="e2-substrate-select">Substrate:</label>
+          <select id="e2-substrate-select">
+            <option value="2-bromobutane">2-Bromobutane</option>
+            <option value="2-bromopentane">2-Bromopentane</option>
+            <option value="cyclohexyl-bromide">Bromocyclohexane</option>
+            <option value="menthyl-chloride">Menthyl chloride</option>
+            <option value="neomenthyl-chloride">Neomenthyl chloride</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="e2-base-select">Base:</label>
+          <select id="e2-base-select">
+            <option value="NaOEt">NaOEt (non-bulky)</option>
+            <option value="NaOH">NaOH (non-bulky)</option>
+            <option value="tBuOK">t-BuOK (bulky)</option>
+            <option value="DBU">DBU (bulky)</option>
+            <option value="LDA">LDA (bulky)</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="e2-view-select">View:</label>
+          <select id="e2-view-select">
+            <option value="newman">Newman Projection</option>
+            <option value="chair">Chair Conformation</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label>
+            <input type="checkbox" id="e2-show-anti" checked>
+            Highlight anti-periplanar H
+          </label>
+        </div>
+        <div class="control-row energy-buttons">
+          <button id="e2-analyze-btn" class="primary-btn">Analyze E2</button>
+        </div>
+      </div>
+
       <div class="chair-container" id="chair-container">
         <div class="svg-wrapper" id="svg-wrapper">
           <svg id="chair-svg" viewBox="0 0 400 350"></svg>
@@ -408,6 +449,74 @@
           <div class="quiz-actions">
             <button id="energy-new-question-btn" class="primary-btn">New Question</button>
             <button id="energy-submit-btn" class="primary-btn" disabled>Submit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- E2 Stereochemistry Panel -->
+      <div id="e2-panel" class="energy-display hidden">
+        <h3>E2 Analysis</h3>
+
+        <!-- Product Prediction -->
+        <div id="e2-products" class="e2-products">
+          <h4>Possible Products</h4>
+          <div id="e2-product-list" class="e2-product-list">
+            <p class="empty-message">Select substrate and click "Analyze E2"</p>
+          </div>
+        </div>
+
+        <!-- Major Product -->
+        <div id="e2-major-product" class="e2-major-product hidden">
+          <div class="major-product-header">
+            <span class="label">Major Product:</span>
+            <span id="e2-major-name" class="product-name">—</span>
+          </div>
+          <div class="product-type">
+            <span id="e2-product-type"></span>
+          </div>
+        </div>
+
+        <!-- Explanation -->
+        <div id="e2-explanation" class="e2-explanation">
+          <h4>Key Concepts</h4>
+          <ul id="e2-explanation-list" class="explanation-list">
+            <li>E2 requires <strong>anti-periplanar</strong> geometry (180°)</li>
+            <li>H and leaving group must be on opposite sides</li>
+            <li>Concerted mechanism - no carbocation intermediate</li>
+          </ul>
+        </div>
+
+        <!-- Legend -->
+        <div class="e2-legend">
+          <h4>Newman Legend</h4>
+          <div class="legend-item">
+            <span class="legend-color anti"></span>
+            <span>Anti-periplanar H (can eliminate)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color gauche"></span>
+            <span>Gauche H (cannot eliminate)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color lg"></span>
+            <span>Leaving group</span>
+          </div>
+        </div>
+
+        <!-- E2 Quiz Panel -->
+        <div id="e2-quiz-panel" class="energy-quiz-panel hidden">
+          <div class="quiz-header">
+            <h4>E2 Stereochemistry Quiz</h4>
+            <div class="quiz-score">Score: <span id="e2-quiz-score">0/0</span></div>
+          </div>
+          <div class="quiz-question-area">
+            <p id="e2-quiz-question" class="quiz-question">Click "New Question" to start!</p>
+            <div id="e2-quiz-options" class="quiz-options"></div>
+            <div id="e2-quiz-feedback" class="quiz-feedback hidden"></div>
+          </div>
+          <div class="quiz-actions">
+            <button id="e2-new-question-btn" class="primary-btn">New Question</button>
+            <button id="e2-submit-btn" class="primary-btn" disabled>Submit</button>
           </div>
         </div>
       </div>

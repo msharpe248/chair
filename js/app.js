@@ -31,6 +31,8 @@ import { renderEnergyDiagram as renderEnergyDiagramSVG, REACTION_PRESETS, getEne
 import { predictMechanism, getMechanismEnergy, explainPrediction, getCompetingMechanisms } from './reaction-predictor.js';
 import { analyzeReaction, getEnergyFromSMILES, REACTION_EXAMPLES } from './reaction-smiles.js';
 import { generateEnergyQuestion, checkEnergyAnswer, resetEnergyQuiz, getEnergyQuizState } from './energy-quiz.js';
+import { E2_PRESETS, analyzeE2, generateE2Question } from './e2-stereo.js';
+import { renderE2Newman, getE2Analysis, E2_NEWMAN_CONFIGS } from './e2-newman.js';
 
 // Application State
 let state = createMoleculeState();
@@ -87,6 +89,15 @@ let customEnergyConfig = {
   intE: 12,
   ea2: 5
 };
+
+// E2 stereochemistry state
+let e2Substrate = '2-bromobutane';
+let e2Base = 'NaOEt';
+let e2ShowHighlighting = true;
+let e2QuizActive = false;
+let e2QuizScore = { correct: 0, total: 0 };
+let currentE2Question = null;
+let selectedE2Answer = null;
 let selectedEnergyAnswer = null;
 
 // Preset definitions for cyclohexane examples
@@ -379,6 +390,12 @@ function setupEventListeners() {
   document.getElementById('energy-quiz-mode-btn').addEventListener('click', toggleEnergyQuizMode);
   document.getElementById('energy-new-question-btn').addEventListener('click', handleEnergyNewQuestion);
   document.getElementById('energy-submit-btn').addEventListener('click', handleEnergySubmitAnswer);
+
+  // E2 stereochemistry controls
+  document.getElementById('e2-substrate-select').addEventListener('change', handleE2SubstrateChange);
+  document.getElementById('e2-base-select').addEventListener('change', handleE2BaseChange);
+  document.getElementById('e2-show-anti').addEventListener('change', handleE2HighlightToggle);
+  document.getElementById('e2-analyze-btn').addEventListener('click', handleE2Analyze);
 
   // Initialize theme
   initTheme();
@@ -1149,6 +1166,10 @@ function handleViewerChange(e) {
   const energyPanel = document.getElementById('energy-panel');
   const reactionPanel = document.getElementById('reaction-energy-panel');
   const decalinPanel = document.getElementById('decalin-energy-panel');
+  const e2Panel = document.getElementById('e2-panel');
+
+  // Hide E2 panel by default
+  e2Panel.classList.add('hidden');
 
   if (currentViewer === 'chair') {
     // Show chair-specific controls based on current mode
@@ -1197,7 +1218,121 @@ function handleViewerChange(e) {
 
       renderEnergyDiagram();
     }
+  } else if (currentViewer === 'e2') {
+    // Show E2 stereochemistry controls
+    document.getElementById('e2-controls').classList.remove('hidden');
+    energyPanel.classList.add('hidden');
+    decalinPanel.classList.add('hidden');
+    reactionPanel.classList.add('hidden');
+    document.getElementById('e2-panel').classList.remove('hidden');
+
+    // Render E2 Newman projection
+    renderE2View();
   }
+}
+
+/**
+ * Render E2 stereochemistry view
+ */
+function renderE2View() {
+  const svg = document.getElementById('chair-svg');
+  renderE2Newman(svg, e2Substrate, e2ShowHighlighting);
+  updateE2Panel();
+}
+
+/**
+ * Update E2 analysis panel
+ */
+function updateE2Panel() {
+  const analysis = getE2Analysis(e2Substrate, e2Base);
+  if (!analysis) return;
+
+  // Update product list
+  const productList = document.getElementById('e2-product-list');
+  productList.innerHTML = '';
+
+  for (const product of analysis.products) {
+    const item = document.createElement('div');
+    item.className = 'e2-product-item' + (product.canEliminate ? ' major' : '');
+
+    const name = document.createElement('span');
+    name.className = 'product-name';
+    name.textContent = `H at ${product.position} (${product.dihedral}°)`;
+    item.appendChild(name);
+
+    const tag = document.createElement('span');
+    tag.className = 'product-tag';
+    tag.textContent = product.canEliminate ? 'Anti - Can eliminate' : 'Gauche - Cannot eliminate';
+    item.appendChild(tag);
+
+    productList.appendChild(item);
+  }
+
+  // Update major product
+  const majorProductDiv = document.getElementById('e2-major-product');
+  if (analysis.majorProduct && !analysis.needsRingFlip) {
+    majorProductDiv.classList.remove('hidden');
+    document.getElementById('e2-major-name').textContent = analysis.majorProduct.name;
+    document.getElementById('e2-product-type').textContent =
+      analysis.isBulkyBase ? 'Hofmann product (bulky base)' : 'Zaitsev product (non-bulky base)';
+  } else {
+    majorProductDiv.classList.add('hidden');
+  }
+
+  // Update explanation list
+  const explanationList = document.getElementById('e2-explanation-list');
+  explanationList.innerHTML = '';
+
+  const explanations = [
+    `Leaving group: ${analysis.leavingGroup}`,
+    `Base: ${analysis.isBulkyBase ? 'Bulky (Hofmann)' : 'Non-bulky (Zaitsev)'}`,
+    'Anti-periplanar H required (180° dihedral)'
+  ];
+
+  if (analysis.needsRingFlip) {
+    explanations.push('⚠ No anti-periplanar H - ring flip needed!');
+  }
+
+  if (analysis.note) {
+    explanations.push(analysis.note);
+  }
+
+  for (const exp of explanations) {
+    const li = document.createElement('li');
+    li.innerHTML = exp;
+    explanationList.appendChild(li);
+  }
+}
+
+/**
+ * Handle E2 substrate change
+ */
+function handleE2SubstrateChange(e) {
+  e2Substrate = e.target.value;
+  renderE2View();
+}
+
+/**
+ * Handle E2 base change
+ */
+function handleE2BaseChange(e) {
+  e2Base = e.target.value;
+  updateE2Panel();
+}
+
+/**
+ * Handle E2 highlighting toggle
+ */
+function handleE2HighlightToggle(e) {
+  e2ShowHighlighting = e.target.checked;
+  renderE2View();
+}
+
+/**
+ * Handle E2 analyze button
+ */
+function handleE2Analyze() {
+  renderE2View();
 }
 
 /**

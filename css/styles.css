@@ -717,6 +717,202 @@ header h1 {
   r: 9;
 }
 
+/* E2 Stereochemistry Styles */
+.e2-products {
+  margin-bottom: 1rem;
+}
+
+.e2-products h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.e2-product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.e2-product-item {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.e2-product-item.major {
+  border-color: var(--success-color);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.e2-product-item .product-name {
+  font-weight: 500;
+}
+
+.e2-product-item .product-tag {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.e2-product-item.major .product-tag {
+  background: var(--success-color);
+  color: white;
+}
+
+.e2-major-product {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid var(--success-color);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.major-product-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.major-product-header .label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.major-product-header .product-name {
+  font-weight: 600;
+  color: var(--success-color);
+  font-size: 1.1rem;
+}
+
+.product-type {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.e2-explanation {
+  margin-bottom: 1rem;
+}
+
+.e2-explanation h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.e2-legend {
+  background: var(--background);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.e2-legend h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid;
+}
+
+.legend-color.anti {
+  background: #22c55e;
+  border-color: #16a34a;
+}
+
+.legend-color.gauche {
+  background: #f59e0b;
+  border-color: #d97706;
+}
+
+.legend-color.lg {
+  background: #dc2626;
+  border-color: #b91c1c;
+}
+
+/* E2 Newman Projection Highlighting */
+.newman-bond.e2-anti {
+  stroke: #22c55e;
+  stroke-width: 4;
+}
+
+.newman-bond.e2-gauche {
+  stroke: #f59e0b;
+  stroke-width: 3;
+}
+
+.newman-bond.e2-leaving-group {
+  stroke: #dc2626;
+  stroke-width: 4;
+}
+
+.newman-label.e2-anti {
+  fill: #16a34a;
+  font-weight: 700;
+}
+
+.newman-label.e2-gauche {
+  fill: #d97706;
+}
+
+.newman-label.e2-leaving-group {
+  fill: #dc2626;
+  font-weight: 700;
+}
+
+/* E2 point highlights */
+.e2-highlight-anti {
+  fill: #22c55e;
+  stroke: #16a34a;
+  stroke-width: 3;
+}
+
+.e2-highlight-gauche {
+  fill: #f59e0b;
+  stroke: #d97706;
+  stroke-width: 2;
+}
+
+.e2-highlight-lg {
+  fill: #dc2626;
+  stroke: #b91c1c;
+  stroke-width: 3;
+}
+
+/* Anti-periplanar indicator arc */
+.e2-anti-arc {
+  fill: none;
+  stroke: #22c55e;
+  stroke-width: 2;
+  stroke-dasharray: 4,2;
+  opacity: 0.7;
+}
+
+.e2-dihedral-label {
+  font-size: 10px;
+  fill: var(--text-secondary);
+}
+
 .mode-btn {
   padding: 0.5rem 1rem;
   border: 1px solid var(--border-color);
