@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chair Conformation Viewer</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Chair Conformation Viewer</h1>
+    <nav class="mode-selector">
+      <button class="mode-btn active" data-mode="cyclohexane">Cyclohexane</button>
+      <button class="mode-btn" data-mode="pyranose">Sugar</button>
+      <button class="mode-btn" data-mode="decalin">Decalin</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="viewer-section">
+      <div class="chair-container">
+        <svg id="chair-svg" viewBox="0 0 400 350"></svg>
+      </div>
+      <div class="controls">
+        <button id="flip-btn">Ring Flip</button>
+        <button id="reset-btn">Reset</button>
+        <label class="checkbox-label">
+          <input type="checkbox" id="show-labels" checked>
+          Show Ax/Eq Labels
+        </label>
+      </div>
+    </section>
+
+    <aside class="info-panel">
+      <div class="energy-display">
+        <h3>Energy Analysis</h3>
+        <div class="energy-row">
+          <span>Current Chair:</span>
+          <span id="energy-current">0.00 kcal/mol</span>
+        </div>
+        <div class="energy-row">
+          <span>Flipped Chair:</span>
+          <span id="energy-flipped">0.00 kcal/mol</span>
+        </div>
+        <div class="energy-row highlight">
+          <span>ΔE:</span>
+          <span id="energy-delta">0.00 kcal/mol</span>
+        </div>
+        <div class="energy-row">
+          <span>Preferred:</span>
+          <span id="preferred-chair">Neither</span>
+        </div>
+      </div>
+
+      <div class="substituents-list">
+        <h3>Substituents</h3>
+        <ul id="substituent-list">
+          <li class="empty-message">Click a position on the chair to add substituents</li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Substituent Picker Modal -->
+  <div id="substituent-picker" class="picker-modal hidden">
+    <div class="picker-content">
+      <h4>Select Position & Substituent</h4>
+      <div class="position-selector">
+        <button class="position-btn" data-position="axial">Axial</button>
+        <button class="position-btn" data-position="equatorial">Equatorial</button>
+      </div>
+      <select id="substituent-select">
+        <option value="H">H (Hydrogen)</option>
+        <option value="CH3">CH₃ (Methyl)</option>
+        <option value="C2H5">C₂H₅ (Ethyl)</option>
+        <option value="iPr">iPr (Isopropyl)</option>
+        <option value="tBu">tBu (tert-Butyl)</option>
+        <option value="Ph">Ph (Phenyl)</option>
+        <option value="OH">OH (Hydroxyl)</option>
+        <option value="OCH3">OCH₃ (Methoxy)</option>
+        <option value="F">F (Fluorine)</option>
+        <option value="Cl">Cl (Chlorine)</option>
+        <option value="Br">Br (Bromine)</option>
+        <option value="I">I (Iodine)</option>
+        <option value="CN">CN (Cyano)</option>
+        <option value="NO2">NO₂ (Nitro)</option>
+        <option value="NH2">NH₂ (Amino)</option>
+        <option value="COOH">COOH (Carboxyl)</option>
+      </select>
+      <div class="picker-actions">
+        <button id="add-substituent-btn">Add</button>
+        <button id="remove-substituent-btn">Remove</button>
+        <button id="cancel-picker-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
