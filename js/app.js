@@ -31,12 +31,19 @@ let currentMode = 'cyclohexane';
 let selectedCarbon = null;
 let selectedPosition = 'axial';
 
-// Zoom state
+// Zoom and pan state
 const DEFAULT_VIEWBOX = { x: 0, y: 0, width: 400, height: 350 };
 let zoomLevel = 1;
 const ZOOM_MIN = 0.5;
 const ZOOM_MAX = 3;
 const ZOOM_STEP = 0.25;
+
+// Pan state
+let panX = 0;
+let panY = 0;
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
 
 // DOM Elements
 let svg;
@@ -119,6 +126,17 @@ function setupEventListeners() {
     const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
     handleZoom(delta);
   }, { passive: false });
+
+  // Pan/drag functionality
+  chairContainer.addEventListener('mousedown', handlePanStart);
+  chairContainer.addEventListener('mousemove', handlePanMove);
+  chairContainer.addEventListener('mouseup', handlePanEnd);
+  chairContainer.addEventListener('mouseleave', handlePanEnd);
+
+  // Touch support for mobile
+  chairContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+  chairContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+  chairContainer.addEventListener('touchend', handlePanEnd);
 }
 
 /**
@@ -425,25 +443,87 @@ function handleZoom(delta) {
 }
 
 /**
- * Reset zoom to default level
+ * Reset zoom and pan to default
  */
 function resetZoom() {
   zoomLevel = 1;
+  panX = 0;
+  panY = 0;
   updateViewBox();
 }
 
 /**
- * Update SVG viewBox based on current zoom level
+ * Update SVG transform (zoom and pan)
  */
 function updateViewBox() {
-  const newWidth = DEFAULT_VIEWBOX.width / zoomLevel;
-  const newHeight = DEFAULT_VIEWBOX.height / zoomLevel;
+  // Use CSS transform for zoom and pan
+  svg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
 
-  // Center the viewBox
-  const newX = (DEFAULT_VIEWBOX.width - newWidth) / 2;
-  const newY = (DEFAULT_VIEWBOX.height - newHeight) / 2;
+  // Update zoom level display
+  const zoomDisplay = document.getElementById('zoom-level');
+  if (zoomDisplay) {
+    zoomDisplay.textContent = `${Math.round(zoomLevel * 100)}%`;
+  }
+}
 
-  svg.setAttribute('viewBox', `${newX} ${newY} ${newWidth} ${newHeight}`);
+/**
+ * Handle pan start (mouse down)
+ */
+function handlePanStart(e) {
+  // Don't pan if clicking on a carbon circle or zoom controls
+  if (e.target.closest('.zoom-controls') || e.target.closest('.carbon-circle')) {
+    return;
+  }
+
+  isPanning = true;
+  panStartX = e.clientX - panX;
+  panStartY = e.clientY - panY;
+}
+
+/**
+ * Handle pan move (mouse move)
+ */
+function handlePanMove(e) {
+  if (!isPanning) return;
+
+  e.preventDefault();
+  panX = e.clientX - panStartX;
+  panY = e.clientY - panStartY;
+  updateViewBox();
+}
+
+/**
+ * Handle pan end (mouse up or leave)
+ */
+function handlePanEnd() {
+  isPanning = false;
+}
+
+/**
+ * Handle touch start for mobile
+ */
+function handleTouchStart(e) {
+  if (e.touches.length === 1) {
+    const touch = e.touches[0];
+    if (!e.target.closest('.zoom-controls') && !e.target.closest('.carbon-circle')) {
+      isPanning = true;
+      panStartX = touch.clientX - panX;
+      panStartY = touch.clientY - panY;
+    }
+  }
+}
+
+/**
+ * Handle touch move for mobile
+ */
+function handleTouchMove(e) {
+  if (!isPanning || e.touches.length !== 1) return;
+
+  e.preventDefault();
+  const touch = e.touches[0];
+  panX = touch.clientX - panStartX;
+  panY = touch.clientY - panStartY;
+  updateViewBox();
 }
 
 // Initialize when DOM is ready

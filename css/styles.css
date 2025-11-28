@@ -112,24 +112,29 @@ main {
   justify-content: center;
   position: relative;
   overflow: hidden;
+  cursor: grab;
+}
+
+.chair-container:active {
+  cursor: grabbing;
 }
 
 #chair-svg {
   width: 100%;
   height: 100%;
   max-width: 400px;
-  transition: transform 0.1s ease;
+  transform-origin: center center;
+  pointer-events: all;
 }
 
 /* Zoom Controls */
 .zoom-controls {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 10;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-right: 0.5rem;
 }
 
 .zoom-controls button {
@@ -139,8 +144,8 @@ main {
   background: var(--surface);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 1.25rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -157,6 +162,14 @@ main {
 
 .zoom-controls button:active {
   transform: scale(0.95);
+}
+
+#zoom-level {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  min-width: 45px;
+  text-align: center;
+  font-family: 'SF Mono', 'Consolas', monospace;
 }
 
 .controls {
