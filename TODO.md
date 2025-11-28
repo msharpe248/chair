@@ -8,11 +8,11 @@
 - [x] Newman Projections
 - [x] 3D View Toggle - Simple 3D rotation of the molecule
 - [x] Practice Quiz Mode - Random problems to test understanding
+- [x] Energy Diagram - Visual bar chart comparing conformer energies
 
 ## Pending
 
 ### High Priority
-- [ ] Energy Diagram - Visual bar chart comparing conformer energies
 - [ ] Animation - Smooth ring flip animation showing pathway through boat
 
 ### Medium Priority

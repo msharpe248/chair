@@ -362,6 +362,73 @@ main {
   font-family: 'SF Mono', 'Consolas', monospace;
 }
 
+/* Energy Bar Chart */
+.energy-chart {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.energy-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.bar-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  width: 50px;
+  flex-shrink: 0;
+}
+
+.bar-container {
+  flex: 1;
+  height: 20px;
+  background: var(--surface-hover);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.energy-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease-out;
+  min-width: 2px;
+}
+
+.energy-bar.current {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.energy-bar.flipped {
+  background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+}
+
+.energy-bar.preferred {
+  box-shadow: 0 0 0 2px #22c55e;
+}
+
+.bar-value {
+  font-size: 0.75rem;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  color: var(--text-secondary);
+  width: 35px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.chart-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  padding: 0 50px 0 55px;
+}
+
 .substituents-list ul {
   list-style: none;
 }

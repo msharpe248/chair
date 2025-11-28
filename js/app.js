@@ -626,10 +626,56 @@ function updateEnergyDisplay() {
 
   const comparison = compareConformations(state);
 
-  document.getElementById('energy-current').textContent = formatEnergy(comparison.energyCurrent);
-  document.getElementById('energy-flipped').textContent = formatEnergy(comparison.energyFlipped);
+  // Update text values
   document.getElementById('energy-delta').textContent = formatEnergy(comparison.deltaE);
   document.getElementById('preferred-chair').textContent = getPreferredDescription(comparison);
+
+  // Update bar chart
+  updateEnergyBarChart(comparison);
+}
+
+/**
+ * Update the energy bar chart visualization
+ */
+function updateEnergyBarChart(comparison) {
+  const barCurrent = document.getElementById('bar-current');
+  const barFlipped = document.getElementById('bar-flipped');
+  const valueCurrent = document.getElementById('bar-current-value');
+  const valueFlipped = document.getElementById('bar-flipped-value');
+  const chartMax = document.getElementById('chart-max');
+
+  const energyCurrent = comparison.energyCurrent;
+  const energyFlipped = comparison.energyFlipped;
+
+  // Determine max scale (round up to nice number)
+  const maxEnergy = Math.max(energyCurrent, energyFlipped, 0.5);
+  const scale = Math.ceil(maxEnergy * 2) / 2; // Round to nearest 0.5
+  const displayScale = Math.max(scale, 1); // Minimum scale of 1
+
+  // Calculate bar widths as percentages
+  const currentWidth = (energyCurrent / displayScale) * 100;
+  const flippedWidth = (energyFlipped / displayScale) * 100;
+
+  // Update bars
+  barCurrent.style.width = `${Math.min(currentWidth, 100)}%`;
+  barFlipped.style.width = `${Math.min(flippedWidth, 100)}%`;
+
+  // Update values
+  valueCurrent.textContent = energyCurrent.toFixed(2);
+  valueFlipped.textContent = energyFlipped.toFixed(2);
+
+  // Update scale label
+  chartMax.textContent = displayScale.toFixed(1);
+
+  // Highlight preferred conformer
+  barCurrent.classList.remove('preferred');
+  barFlipped.classList.remove('preferred');
+
+  if (comparison.deltaE < -0.1) {
+    barCurrent.classList.add('preferred');
+  } else if (comparison.deltaE > 0.1) {
+    barFlipped.classList.add('preferred');
+  }
 }
 
 /**

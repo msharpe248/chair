@@ -143,13 +143,26 @@
     <aside class="info-panel">
       <div id="energy-panel" class="energy-display">
         <h3>Energy Analysis</h3>
-        <div class="energy-row">
-          <span>Current Chair:</span>
-          <span id="energy-current">0.00 kcal/mol</span>
-        </div>
-        <div class="energy-row">
-          <span>Flipped Chair:</span>
-          <span id="energy-flipped">0.00 kcal/mol</span>
+        <div class="energy-chart">
+          <div class="energy-bar-row">
+            <span class="bar-label">Current</span>
+            <div class="bar-container">
+              <div id="bar-current" class="energy-bar current"></div>
+            </div>
+            <span id="bar-current-value" class="bar-value">0.00</span>
+          </div>
+          <div class="energy-bar-row">
+            <span class="bar-label">Flipped</span>
+            <div class="bar-container">
+              <div id="bar-flipped" class="energy-bar flipped"></div>
+            </div>
+            <span id="bar-flipped-value" class="bar-value">0.00</span>
+          </div>
+          <div class="chart-scale">
+            <span>0</span>
+            <span>kcal/mol</span>
+            <span id="chart-max">10</span>
+          </div>
         </div>
         <div class="energy-row highlight">
           <span>ΔE:</span>
