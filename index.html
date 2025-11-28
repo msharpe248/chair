@@ -8,8 +8,13 @@
 </head>
 <body>
   <header>
-    <h1>Chair Conformation Viewer</h1>
-    <nav class="mode-selector">
+    <div class="viewer-selector">
+      <select id="viewer-select">
+        <option value="chair">Chair Conformation Viewer</option>
+        <option value="energy">Reaction Energy Diagram</option>
+      </select>
+    </div>
+    <nav id="chair-mode-selector" class="mode-selector">
       <button class="mode-btn active" data-mode="cyclohexane">Cyclohexane</button>
       <button class="mode-btn" data-mode="pyranose">Sugar</button>
       <button class="mode-btn" data-mode="decalin">Decalin</button>
@@ -19,7 +24,8 @@
       <span class="theme-icon light">☀️</span>
       <span class="theme-icon dark">🌙</span>
     </button>
-    <button id="quiz-mode-btn" class="quiz-btn">Quiz Mode</button>
+    <button id="quiz-mode-btn" class="quiz-btn chair-only">Quiz Mode</button>
+    <button id="energy-quiz-mode-btn" class="quiz-btn energy-only hidden">Quiz Mode</button>
   </header>
 
   <main>
@@ -110,6 +116,139 @@
         </div>
       </div>
 
+      <!-- Energy Diagram Controls (hidden by default) -->
+      <div id="energy-controls" class="mode-controls hidden">
+        <div class="energy-mode-toggle">
+          <button class="energy-mode-btn active" data-mode="predict">Conditions</button>
+          <button class="energy-mode-btn" data-mode="smiles">SMILES</button>
+          <button class="energy-mode-btn" data-mode="preset">Preset</button>
+        </div>
+
+        <!-- Prediction Mode Controls -->
+        <div id="predict-controls" class="energy-subcontrols">
+          <div class="condition-grid">
+            <div class="condition-item">
+              <label for="substrate-select">Substrate:</label>
+              <select id="substrate-select">
+                <option value="methyl">Methyl (CH₃-X)</option>
+                <option value="primary">1° Primary</option>
+                <option value="secondary" selected>2° Secondary</option>
+                <option value="tertiary">3° Tertiary</option>
+                <option value="allylic">Allylic</option>
+                <option value="benzylic">Benzylic</option>
+                <option value="vinyl">Vinyl/Aryl</option>
+              </select>
+            </div>
+            <div class="condition-item">
+              <label for="nucleophile-select">Nucleophile/Base:</label>
+              <select id="nucleophile-select">
+                <option value="strong_small">Strong, small (CN⁻, I⁻)</option>
+                <option value="strong_normal" selected>Strong (OH⁻, RO⁻)</option>
+                <option value="strong_bulky">Strong, bulky (tBuO⁻)</option>
+                <option value="weak">Weak (H₂O, ROH)</option>
+                <option value="none">None / Very weak</option>
+              </select>
+            </div>
+            <div class="condition-item">
+              <label for="leaving-group-select">Leaving Group:</label>
+              <select id="leaving-group-select">
+                <option value="excellent">Excellent (OTs, I⁻)</option>
+                <option value="good" selected>Good (Br⁻, Cl⁻)</option>
+                <option value="moderate">Moderate (F⁻)</option>
+                <option value="poor">Poor (OH, NH₂)</option>
+              </select>
+            </div>
+            <div class="condition-item">
+              <label for="solvent-select">Solvent:</label>
+              <select id="solvent-select">
+                <option value="polar_aprotic">Polar aprotic (DMSO)</option>
+                <option value="polar_protic" selected>Polar protic (EtOH)</option>
+                <option value="nonpolar">Nonpolar (hexane)</option>
+              </select>
+            </div>
+            <div class="condition-item">
+              <label for="temperature-select">Temperature:</label>
+              <select id="temperature-select">
+                <option value="low">Low (&lt; 0°C)</option>
+                <option value="room" selected>Room temp</option>
+                <option value="elevated">Elevated (50-80°C)</option>
+                <option value="high">High (&gt; 100°C)</option>
+              </select>
+            </div>
+          </div>
+          <div class="control-row energy-buttons">
+            <button id="predict-btn" class="primary-btn">Predict Mechanism</button>
+            <button id="show-competing-btn" class="small-btn">Show All Competing</button>
+          </div>
+        </div>
+
+        <!-- SMILES Mode Controls -->
+        <div id="smiles-controls" class="energy-subcontrols hidden">
+          <div class="smiles-reaction-input">
+            <div class="smiles-row">
+              <label for="reactant-smiles">Reactant:</label>
+              <input type="text" id="reactant-smiles" placeholder="e.g., CCBr" class="smiles-input">
+            </div>
+            <div class="smiles-arrow">→</div>
+            <div class="smiles-row">
+              <label for="product-smiles">Product:</label>
+              <input type="text" id="product-smiles" placeholder="e.g., CCO" class="smiles-input">
+            </div>
+          </div>
+          <div class="smiles-examples">
+            <label>Examples:</label>
+            <select id="smiles-example-select">
+              <option value="">— Select example —</option>
+              <option value="sn2">SN2: CCBr → CCO</option>
+              <option value="sn1">SN1: CC(C)(C)Br → CC(C)(C)O</option>
+              <option value="e2">E2: CC(Br)C → CC=C</option>
+              <option value="hydro">Hydrogenation: CC=CC → CCCC</option>
+            </select>
+          </div>
+          <div class="control-row energy-buttons">
+            <button id="analyze-smiles-btn" class="primary-btn">Analyze Reaction</button>
+          </div>
+          <div id="smiles-analysis" class="smiles-analysis hidden">
+            <div class="analysis-row">
+              <span>Reaction Type:</span>
+              <span id="smiles-reaction-type">—</span>
+            </div>
+            <div class="analysis-row">
+              <span>Bonds Broken:</span>
+              <span id="smiles-bonds-broken">—</span>
+            </div>
+            <div class="analysis-row">
+              <span>Bonds Formed:</span>
+              <span id="smiles-bonds-formed">—</span>
+            </div>
+            <div class="analysis-row highlight">
+              <span>Est. ΔH:</span>
+              <span id="smiles-delta-h">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preset Mode Controls -->
+        <div id="preset-controls" class="energy-subcontrols hidden">
+          <div class="control-row">
+            <label for="reaction-preset">Reaction:</label>
+            <select id="reaction-preset">
+              <option value="sn2">SN2 (concerted)</option>
+              <option value="sn1">SN1 (2-step)</option>
+              <option value="e2">E2 (concerted)</option>
+              <option value="e1">E1 (2-step)</option>
+              <option value="hydrogenation">Hydrogenation</option>
+              <option value="exothermic">Exothermic (generic)</option>
+              <option value="endothermic">Endothermic (generic)</option>
+            </select>
+          </div>
+          <div class="control-row energy-buttons">
+            <button id="add-curve-btn" class="small-btn">+ Add Curve</button>
+            <button id="clear-curves-btn" class="small-btn">Clear All</button>
+          </div>
+        </div>
+      </div>
+
       <div class="chair-container" id="chair-container">
         <div class="svg-wrapper" id="svg-wrapper">
           <svg id="chair-svg" viewBox="0 0 400 350"></svg>
@@ -122,7 +261,7 @@
           <button id="zoom-in-btn" title="Zoom In">+</button>
           <button id="zoom-reset-btn" title="Reset Zoom">↺</button>
         </div>
-        <div class="rotation-controls">
+        <div class="rotation-controls chair-only">
           <label class="checkbox-label">
             <input type="checkbox" id="enable-3d">
             3D
@@ -136,7 +275,7 @@
           <button id="export-svg-btn" title="Export as SVG">📄 SVG</button>
         </div>
       </div>
-      <div class="controls">
+      <div class="controls chair-only">
         <button id="flip-btn">Ring Flip</button>
         <button id="reset-btn">Reset</button>
         <label class="checkbox-label">
@@ -174,7 +313,71 @@
         </div>
       </div>
 
-      <div id="energy-panel" class="energy-display">
+      <!-- Energy Diagram Info Panel (for reaction energy viewer) -->
+      <div id="reaction-energy-panel" class="energy-display hidden">
+        <h3>Mechanism Prediction</h3>
+
+        <!-- Prediction Result -->
+        <div id="prediction-result" class="prediction-result">
+          <div class="prediction-header">
+            <span class="predicted-mechanism" id="predicted-mechanism">—</span>
+            <span class="prediction-confidence" id="prediction-confidence"></span>
+          </div>
+          <div id="mechanism-scores" class="mechanism-scores">
+            <div class="score-bar-row">
+              <span class="score-label">SN2</span>
+              <div class="score-bar-container"><div class="score-bar" id="score-sn2"></div></div>
+              <span class="score-value" id="score-sn2-val">0%</span>
+            </div>
+            <div class="score-bar-row">
+              <span class="score-label">SN1</span>
+              <div class="score-bar-container"><div class="score-bar" id="score-sn1"></div></div>
+              <span class="score-value" id="score-sn1-val">0%</span>
+            </div>
+            <div class="score-bar-row">
+              <span class="score-label">E2</span>
+              <div class="score-bar-container"><div class="score-bar" id="score-e2"></div></div>
+              <span class="score-value" id="score-e2-val">0%</span>
+            </div>
+            <div class="score-bar-row">
+              <span class="score-label">E1</span>
+              <div class="score-bar-container"><div class="score-bar" id="score-e1"></div></div>
+              <span class="score-value" id="score-e1-val">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Explanation -->
+        <div id="prediction-explanation" class="prediction-explanation">
+          <h4>Why this mechanism?</h4>
+          <ul id="explanation-list" class="explanation-list">
+            <li class="empty-message">Select conditions and click "Predict"</li>
+          </ul>
+        </div>
+
+        <!-- Curve Details (for preset mode) -->
+        <div id="curve-list" class="curve-list hidden">
+        </div>
+
+        <!-- Energy Quiz Panel -->
+        <div id="energy-quiz-panel" class="energy-quiz-panel hidden">
+          <div class="quiz-header">
+            <h4>Energy Diagram Quiz</h4>
+            <div class="quiz-score">Score: <span id="energy-quiz-score">0/0</span></div>
+          </div>
+          <div class="quiz-question-area">
+            <p id="energy-quiz-question" class="quiz-question">Click "New Question" to start!</p>
+            <div id="energy-quiz-options" class="quiz-options"></div>
+            <div id="energy-quiz-feedback" class="quiz-feedback hidden"></div>
+          </div>
+          <div class="quiz-actions">
+            <button id="energy-new-question-btn" class="primary-btn">New Question</button>
+            <button id="energy-submit-btn" class="primary-btn" disabled>Submit</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="energy-panel" class="energy-display chair-only">
         <h3>Energy Analysis</h3>
         <div class="energy-chart">
           <div class="energy-bar-row">
@@ -219,7 +422,7 @@
         </div>
       </div>
 
-      <div class="substituents-list">
+      <div class="substituents-list chair-only">
         <h3>Substituents</h3>
         <ul id="substituent-list">
           <li class="empty-message">Click a position on the chair to add substituents</li>

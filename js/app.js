@@ -27,9 +27,14 @@ import { createDecalinState, canFlip, getDecalinInfo, toggleDecalinType } from '
 import { renderNewman } from './newman.js';
 import { generateQuestion, checkAnswer } from './quiz.js';
 import { parseCyclohexaneSMILES } from './smiles.js';
+import { renderEnergyDiagram as renderEnergyDiagramSVG, REACTION_PRESETS, getEnergyInfo } from './energy-diagram.js';
+import { predictMechanism, getMechanismEnergy, explainPrediction, getCompetingMechanisms } from './reaction-predictor.js';
+import { analyzeReaction, getEnergyFromSMILES, REACTION_EXAMPLES } from './reaction-smiles.js';
+import { generateEnergyQuestion, checkEnergyAnswer, resetEnergyQuiz, getEnergyQuizState } from './energy-quiz.js';
 
 // Application State
 let state = createMoleculeState();
+let currentViewer = 'chair';  // 'chair' or 'energy'
 let currentMode = 'cyclohexane';
 let currentView = 'chair';  // 'chair' or 'newman'
 let newmanBondIndex = 0;    // Which C-C bond to view in Newman projection
@@ -63,6 +68,17 @@ let quizScore = { correct: 0, total: 0 };
 
 // Theme state
 let currentTheme = localStorage.getItem('theme') || 'auto';
+
+// Energy diagram state
+let energyCurves = [];
+let selectedReactionPreset = 'sn2';
+let energyMode = 'predict';  // 'predict', 'smiles', 'preset', or 'quiz'
+let currentPrediction = null;
+
+// Energy quiz state
+let energyQuizActive = false;
+let currentEnergyQuestion = null;
+let selectedEnergyAnswer = null;
 
 // Preset definitions for cyclohexane examples
 const PRESETS = {
@@ -312,6 +328,41 @@ function setupEventListeners() {
 
   // Theme toggle
   document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+
+  // Viewer selector (switch between Chair and Energy viewers)
+  document.getElementById('viewer-select').addEventListener('change', handleViewerChange);
+
+  // Energy diagram controls
+  document.getElementById('reaction-preset').addEventListener('change', handleReactionPresetChange);
+  document.getElementById('add-curve-btn').addEventListener('click', handleAddCurve);
+  document.getElementById('clear-curves-btn').addEventListener('click', handleClearCurves);
+
+  // Energy mode toggle (predict vs preset)
+  document.querySelectorAll('.energy-mode-btn').forEach(btn => {
+    btn.addEventListener('click', handleEnergyModeToggle);
+  });
+
+  // Prediction controls
+  document.getElementById('predict-btn').addEventListener('click', handlePredictMechanism);
+  document.getElementById('show-competing-btn').addEventListener('click', handleShowCompeting);
+
+  // Auto-predict when conditions change
+  ['substrate-select', 'nucleophile-select', 'leaving-group-select', 'solvent-select', 'temperature-select'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      if (energyMode === 'predict' && currentViewer === 'energy') {
+        handlePredictMechanism();
+      }
+    });
+  });
+
+  // SMILES mode controls
+  document.getElementById('analyze-smiles-btn').addEventListener('click', handleAnalyzeSMILES);
+  document.getElementById('smiles-example-select').addEventListener('change', handleSMILESExample);
+
+  // Energy quiz controls
+  document.getElementById('energy-quiz-mode-btn').addEventListener('click', toggleEnergyQuizMode);
+  document.getElementById('energy-new-question-btn').addEventListener('click', handleEnergyNewQuestion);
+  document.getElementById('energy-submit-btn').addEventListener('click', handleEnergySubmitAnswer);
 
   // Initialize theme
   initTheme();
@@ -1047,6 +1098,601 @@ function resetQuizScore() {
  */
 function updateQuizScoreDisplay() {
   document.getElementById('quiz-score').textContent = `${quizScore.correct}/${quizScore.total}`;
+}
+
+// ============== Viewer Switching ==============
+
+/**
+ * Handle switching between viewers (chair, energy)
+ */
+function handleViewerChange(e) {
+  const newViewer = e.target.value;
+  if (newViewer === currentViewer) return;
+
+  currentViewer = newViewer;
+
+  // Hide all mode controls first
+  document.querySelectorAll('.mode-controls').forEach(el => el.classList.add('hidden'));
+
+  // Show/hide chair-only elements
+  document.querySelectorAll('.chair-only').forEach(el => {
+    el.style.display = currentViewer === 'chair' ? '' : 'none';
+  });
+
+  // Show/hide energy-only elements
+  document.querySelectorAll('.energy-only').forEach(el => {
+    el.style.display = currentViewer === 'energy' ? '' : 'none';
+    el.classList.toggle('hidden', currentViewer !== 'energy');
+  });
+
+  // Show/hide chair mode selector
+  const modeSelector = document.getElementById('chair-mode-selector');
+  modeSelector.style.display = currentViewer === 'chair' ? '' : 'none';
+
+  // Show/hide viewer-specific panels
+  const energyPanel = document.getElementById('energy-panel');
+  const reactionPanel = document.getElementById('reaction-energy-panel');
+  const decalinPanel = document.getElementById('decalin-energy-panel');
+
+  if (currentViewer === 'chair') {
+    // Show chair-specific controls based on current mode
+    if (currentMode === 'cyclohexane') {
+      document.getElementById('cyclohexane-controls').classList.remove('hidden');
+      energyPanel.classList.remove('hidden');
+      decalinPanel.classList.add('hidden');
+    } else if (currentMode === 'pyranose') {
+      document.getElementById('pyranose-controls').classList.remove('hidden');
+      energyPanel.classList.remove('hidden');
+      decalinPanel.classList.add('hidden');
+    } else if (currentMode === 'decalin') {
+      document.getElementById('decalin-controls').classList.remove('hidden');
+      energyPanel.classList.add('hidden');
+      decalinPanel.classList.remove('hidden');
+    }
+    reactionPanel.classList.add('hidden');
+
+    // Re-render chair view
+    renderView();
+  } else if (currentViewer === 'energy') {
+    // Show energy diagram controls
+    document.getElementById('energy-controls').classList.remove('hidden');
+    energyPanel.classList.add('hidden');
+    decalinPanel.classList.add('hidden');
+    reactionPanel.classList.remove('hidden');
+
+    // Initialize based on current energy mode
+    if (energyMode === 'predict') {
+      // Show predict controls, hide preset controls
+      document.getElementById('predict-controls').classList.remove('hidden');
+      document.getElementById('preset-controls').classList.add('hidden');
+      document.getElementById('prediction-result').classList.remove('hidden');
+      document.getElementById('prediction-explanation').classList.remove('hidden');
+      document.getElementById('curve-list').classList.add('hidden');
+
+      // Run initial prediction
+      handlePredictMechanism();
+    } else {
+      // Show preset controls, hide predict controls
+      document.getElementById('predict-controls').classList.add('hidden');
+      document.getElementById('preset-controls').classList.remove('hidden');
+      document.getElementById('prediction-result').classList.add('hidden');
+      document.getElementById('prediction-explanation').classList.add('hidden');
+      document.getElementById('curve-list').classList.remove('hidden');
+
+      renderEnergyDiagram();
+    }
+  }
+}
+
+/**
+ * Render energy diagram with current curves
+ */
+function renderEnergyDiagram() {
+  const svg = document.getElementById('chair-svg');
+
+  if (energyCurves.length === 0) {
+    // Show empty state with just the preset
+    const preset = document.getElementById('reaction-preset').value;
+    energyCurves = [{ preset: preset, name: REACTION_PRESETS[preset].name }];
+  }
+
+  renderEnergyDiagramSVG(svg, energyCurves);
+  updateReactionEnergyPanel();
+}
+
+/**
+ * Update the reaction energy info panel
+ */
+function updateReactionEnergyPanel() {
+  const curveList = document.getElementById('curve-list');
+
+  if (energyCurves.length === 0) {
+    curveList.innerHTML = '<p class="empty-message">Select a reaction preset to begin</p>';
+    return;
+  }
+
+  let html = '';
+  energyCurves.forEach((curve, index) => {
+    const info = getEnergyInfo(curve.preset);
+    if (info) {
+      html += `
+        <div class="curve-info" data-index="${index}">
+          <div class="curve-header">
+            <span class="curve-name">${info.name}</span>
+            ${energyCurves.length > 1 ? `<button class="remove-curve-btn" data-index="${index}">×</button>` : ''}
+          </div>
+          <div class="curve-details">
+            <div class="energy-row">
+              <span>Ea:</span>
+              <span>${info.ea.toFixed(1)} kcal/mol</span>
+            </div>
+            <div class="energy-row">
+              <span>ΔH:</span>
+              <span>${info.deltaH.toFixed(1)} kcal/mol</span>
+            </div>
+            <div class="energy-row">
+              <span>Steps:</span>
+              <span>${info.steps}</span>
+            </div>
+          </div>
+          <p class="curve-description">${info.description}</p>
+        </div>
+      `;
+    }
+  });
+
+  curveList.innerHTML = html;
+
+  // Add event listeners for remove buttons
+  curveList.querySelectorAll('.remove-curve-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const index = parseInt(e.target.dataset.index, 10);
+      energyCurves.splice(index, 1);
+      renderEnergyDiagram();
+    });
+  });
+}
+
+/**
+ * Handle reaction preset change
+ */
+function handleReactionPresetChange(e) {
+  const preset = e.target.value;
+  selectedReactionPreset = preset;
+
+  // Update the first curve or add if empty
+  if (energyCurves.length === 0) {
+    energyCurves = [{ preset: preset, name: REACTION_PRESETS[preset].name }];
+  } else {
+    energyCurves[0] = { preset: preset, name: REACTION_PRESETS[preset].name };
+  }
+
+  renderEnergyDiagram();
+}
+
+/**
+ * Handle adding a new curve for comparison
+ */
+function handleAddCurve() {
+  if (energyCurves.length >= 5) {
+    alert('Maximum 5 curves for comparison');
+    return;
+  }
+
+  const preset = document.getElementById('reaction-preset').value;
+  energyCurves.push({
+    preset: preset,
+    name: `${REACTION_PRESETS[preset].name} (${energyCurves.length + 1})`
+  });
+
+  renderEnergyDiagram();
+}
+
+/**
+ * Handle clearing all curves
+ */
+function handleClearCurves() {
+  energyCurves = [];
+  renderEnergyDiagram();
+}
+
+/**
+ * Handle energy mode toggle (predict vs smiles vs preset)
+ */
+function handleEnergyModeToggle(e) {
+  const mode = e.target.dataset.mode;
+  if (mode === energyMode) return;
+
+  energyMode = mode;
+
+  // Update button states
+  document.querySelectorAll('.energy-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+
+  // Show/hide appropriate controls
+  document.getElementById('predict-controls').classList.toggle('hidden', mode !== 'predict');
+  document.getElementById('smiles-controls').classList.toggle('hidden', mode !== 'smiles');
+  document.getElementById('preset-controls').classList.toggle('hidden', mode !== 'preset');
+
+  // Show/hide appropriate panels
+  document.getElementById('prediction-result').classList.toggle('hidden', mode !== 'predict');
+  document.getElementById('prediction-explanation').classList.toggle('hidden', mode !== 'predict');
+  document.getElementById('curve-list').classList.toggle('hidden', mode !== 'preset');
+
+  // Clear and re-render
+  energyCurves = [];
+  currentPrediction = null;
+
+  // Exit quiz mode when changing modes
+  if (energyQuizActive) {
+    energyQuizActive = false;
+    document.getElementById('energy-quiz-mode-btn').classList.remove('active');
+    document.getElementById('energy-quiz-panel').classList.add('hidden');
+  }
+
+  if (mode === 'predict') {
+    // Run initial prediction
+    handlePredictMechanism();
+  } else if (mode === 'smiles') {
+    // Clear SVG, wait for user input
+    const svg = document.getElementById('chair-svg');
+    svg.innerHTML = '';
+    document.getElementById('smiles-analysis').classList.add('hidden');
+  } else {
+    renderEnergyDiagram();
+  }
+}
+
+/**
+ * Get current reaction conditions from UI
+ */
+function getReactionConditions() {
+  return {
+    substrate: document.getElementById('substrate-select').value,
+    nucleophile: document.getElementById('nucleophile-select').value,
+    leavingGroup: document.getElementById('leaving-group-select').value,
+    solvent: document.getElementById('solvent-select').value,
+    temperature: document.getElementById('temperature-select').value
+  };
+}
+
+/**
+ * Handle mechanism prediction
+ */
+function handlePredictMechanism() {
+  const conditions = getReactionConditions();
+  const prediction = predictMechanism(conditions);
+  currentPrediction = prediction;
+
+  // Get energy parameters for predicted mechanism
+  const energy = getMechanismEnergy(prediction.primary.mechanism, conditions);
+
+  // Set up single curve for the predicted mechanism
+  energyCurves = [{
+    preset: null,
+    customEnergy: energy,
+    name: energy.name,
+    mechanism: prediction.primary.mechanism
+  }];
+
+  // Update prediction display
+  updatePredictionDisplay(prediction);
+
+  // Render the energy diagram with custom energy
+  renderEnergyDiagramWithCustom();
+}
+
+/**
+ * Handle showing all competing mechanisms
+ */
+function handleShowCompeting() {
+  const conditions = getReactionConditions();
+  const result = getCompetingMechanisms(conditions, 10);
+
+  // Build curves for all competing mechanisms
+  energyCurves = result.mechanisms.map((m, index) => ({
+    preset: null,
+    customEnergy: m.energy,
+    name: `${m.energy.name} (${m.percentage}%)`,
+    mechanism: m.mechanism,
+    isPrimary: m.isPrimary
+  }));
+
+  // Update prediction display
+  const prediction = predictMechanism(conditions);
+  currentPrediction = prediction;
+  updatePredictionDisplay(prediction);
+
+  // Render with all curves
+  renderEnergyDiagramWithCustom();
+}
+
+/**
+ * Update the prediction display panel
+ */
+function updatePredictionDisplay(prediction) {
+  // Update main mechanism display
+  document.getElementById('predicted-mechanism').textContent = prediction.primary.mechanism.toUpperCase();
+  document.getElementById('prediction-confidence').textContent = `${prediction.primary.percentage}% likely`;
+
+  // Update score bars
+  const mechanisms = ['sn2', 'sn1', 'e2', 'e1'];
+  mechanisms.forEach(mech => {
+    const score = prediction.scores[mech] || 0;
+    document.getElementById(`score-${mech}`).style.width = `${score}%`;
+    document.getElementById(`score-${mech}-val`).textContent = `${score}%`;
+  });
+
+  // Update explanation
+  const explanation = explainPrediction(prediction);
+  const explanationList = document.getElementById('explanation-list');
+
+  if (explanation.reasons.length > 0) {
+    explanationList.innerHTML = explanation.reasons.map(reason => {
+      const isWarning = reason.includes('⚠️');
+      return `<li class="${isWarning ? 'warning' : ''}">${reason.replace('⚠️ ', '')}</li>`;
+    }).join('');
+  } else {
+    explanationList.innerHTML = '<li class="empty-message">Standard reaction conditions</li>';
+  }
+}
+
+/**
+ * Render energy diagram with custom energy parameters
+ */
+function renderEnergyDiagramWithCustom() {
+  const svg = document.getElementById('chair-svg');
+  svg.innerHTML = '';
+
+  if (energyCurves.length === 0) {
+    return;
+  }
+
+  // Convert custom energies to the format expected by renderEnergyDiagramSVG
+  const curvesForRender = energyCurves.map((curve, index) => {
+    if (curve.customEnergy) {
+      // Register this as a temporary preset
+      const tempKey = `_custom_${index}`;
+      REACTION_PRESETS[tempKey] = curve.customEnergy;
+      return {
+        preset: tempKey,
+        name: curve.name,
+        color: curve.isPrimary ? '#2563eb' : undefined
+      };
+    }
+    return curve;
+  });
+
+  renderEnergyDiagramSVG(svg, curvesForRender);
+
+  // Clean up temporary presets
+  Object.keys(REACTION_PRESETS).forEach(key => {
+    if (key.startsWith('_custom_')) {
+      delete REACTION_PRESETS[key];
+    }
+  });
+}
+
+/**
+ * Handle SMILES example selection
+ */
+function handleSMILESExample(e) {
+  const exampleKey = e.target.value;
+  if (!exampleKey) return;
+
+  const examples = {
+    'sn2': { reactant: 'CCBr', product: 'CCO' },
+    'sn1': { reactant: 'CC(C)(C)Br', product: 'CC(C)(C)O' },
+    'e2': { reactant: 'CC(Br)C', product: 'CC=C' },
+    'hydro': { reactant: 'CC=CC', product: 'CCCC' }
+  };
+
+  const example = examples[exampleKey];
+  if (example) {
+    document.getElementById('reactant-smiles').value = example.reactant;
+    document.getElementById('product-smiles').value = example.product;
+  }
+}
+
+/**
+ * Handle SMILES reaction analysis
+ */
+function handleAnalyzeSMILES() {
+  const reactantSMILES = document.getElementById('reactant-smiles').value.trim();
+  const productSMILES = document.getElementById('product-smiles').value.trim();
+
+  if (!reactantSMILES || !productSMILES) {
+    alert('Please enter both reactant and product SMILES');
+    return;
+  }
+
+  // Analyze the reaction
+  const analysis = analyzeReaction(reactantSMILES, productSMILES);
+
+  if (analysis.error) {
+    alert('Could not analyze reaction: ' + analysis.error);
+    return;
+  }
+
+  // Update analysis display
+  const analysisDiv = document.getElementById('smiles-analysis');
+  analysisDiv.classList.remove('hidden');
+
+  document.getElementById('smiles-reaction-type').textContent =
+    `${analysis.subType || analysis.reactionType}`;
+  document.getElementById('smiles-bonds-broken').textContent =
+    analysis.bondsBroken.join(', ') || '—';
+  document.getElementById('smiles-bonds-formed').textContent =
+    analysis.bondsFormed.join(', ') || '—';
+
+  const deltaH = analysis.estimatedDeltaH;
+  const sign = deltaH >= 0 ? '+' : '';
+  document.getElementById('smiles-delta-h').textContent =
+    `${sign}${deltaH.toFixed(1)} kcal/mol`;
+
+  // Get energy parameters and render
+  const energy = getEnergyFromSMILES(reactantSMILES, productSMILES);
+
+  if (energy) {
+    energyCurves = [{
+      preset: null,
+      customEnergy: energy,
+      name: energy.name,
+      mechanism: analysis.mechanism
+    }];
+
+    renderEnergyDiagramWithCustom();
+  }
+}
+
+// ============== Energy Quiz Functions ==============
+
+/**
+ * Toggle energy quiz mode on/off
+ */
+function toggleEnergyQuizMode() {
+  energyQuizActive = !energyQuizActive;
+
+  const quizBtn = document.getElementById('energy-quiz-mode-btn');
+  const quizPanel = document.getElementById('energy-quiz-panel');
+  const predictionResult = document.getElementById('prediction-result');
+  const predictionExplanation = document.getElementById('prediction-explanation');
+
+  if (energyQuizActive) {
+    // Entering quiz mode
+    quizBtn.classList.add('active');
+    quizPanel.classList.remove('hidden');
+
+    // Hide prediction panels when in quiz mode
+    predictionResult.classList.add('hidden');
+    predictionExplanation.classList.add('hidden');
+
+    // Generate first question
+    handleEnergyNewQuestion();
+  } else {
+    // Exiting quiz mode
+    quizBtn.classList.remove('active');
+    quizPanel.classList.add('hidden');
+
+    // Restore prediction panels if in predict mode
+    if (energyMode === 'predict') {
+      predictionResult.classList.remove('hidden');
+      predictionExplanation.classList.remove('hidden');
+      handlePredictMechanism();
+    } else if (energyMode === 'preset') {
+      renderEnergyDiagram();
+    }
+  }
+}
+
+/**
+ * Handle generating a new energy quiz question
+ */
+function handleEnergyNewQuestion() {
+  currentEnergyQuestion = generateEnergyQuestion();
+  selectedEnergyAnswer = null;
+
+  // Update question display
+  document.getElementById('energy-quiz-question').textContent = currentEnergyQuestion.question;
+
+  // Build options
+  const optionsContainer = document.getElementById('energy-quiz-options');
+  optionsContainer.innerHTML = '';
+
+  currentEnergyQuestion.options.forEach(option => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option-btn';
+    btn.dataset.value = option.value;
+    btn.textContent = option.label;
+    btn.addEventListener('click', () => selectEnergyAnswer(option.value));
+    optionsContainer.appendChild(btn);
+  });
+
+  // Hide feedback
+  document.getElementById('energy-quiz-feedback').classList.add('hidden');
+
+  // Disable submit until answer selected
+  document.getElementById('energy-submit-btn').disabled = true;
+
+  // Render the diagram for the question
+  renderQuestionDiagram(currentEnergyQuestion);
+}
+
+/**
+ * Select an energy quiz answer
+ */
+function selectEnergyAnswer(value) {
+  selectedEnergyAnswer = value;
+
+  // Update button states
+  document.querySelectorAll('#energy-quiz-options .quiz-option-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.value === value);
+  });
+
+  // Enable submit
+  document.getElementById('energy-submit-btn').disabled = false;
+}
+
+/**
+ * Handle submitting an energy quiz answer
+ */
+function handleEnergySubmitAnswer() {
+  if (!selectedEnergyAnswer || !currentEnergyQuestion) return;
+
+  const result = checkEnergyAnswer(selectedEnergyAnswer, currentEnergyQuestion);
+
+  // Show feedback
+  const feedbackDiv = document.getElementById('energy-quiz-feedback');
+  feedbackDiv.classList.remove('hidden');
+
+  if (result.isCorrect) {
+    feedbackDiv.className = 'quiz-feedback correct';
+    feedbackDiv.innerHTML = `<strong>Correct!</strong> ${result.explanation}`;
+  } else {
+    feedbackDiv.className = 'quiz-feedback incorrect';
+    feedbackDiv.innerHTML = `<strong>Incorrect.</strong> The answer is ${result.correctAnswer.toUpperCase()}. ${result.explanation}`;
+  }
+
+  // Update score display
+  document.getElementById('energy-quiz-score').textContent =
+    `${result.score.correct}/${result.score.total}`;
+
+  // Highlight correct/incorrect answers
+  document.querySelectorAll('#energy-quiz-options .quiz-option-btn').forEach(btn => {
+    if (btn.dataset.value === result.correctAnswer) {
+      btn.classList.add('correct');
+    } else if (btn.dataset.value === selectedEnergyAnswer && !result.isCorrect) {
+      btn.classList.add('incorrect');
+    }
+    btn.disabled = true;
+  });
+
+  // Disable submit
+  document.getElementById('energy-submit-btn').disabled = true;
+}
+
+/**
+ * Render diagram for quiz question
+ */
+function renderQuestionDiagram(question) {
+  const svg = document.getElementById('chair-svg');
+
+  if (question.preset) {
+    // Single preset diagram
+    energyCurves = [{ preset: question.preset, name: '' }];
+    renderEnergyDiagramSVG(svg, energyCurves);
+  } else if (question.presets) {
+    // Multiple presets for comparison
+    energyCurves = question.presets.map((preset, i) => ({
+      preset,
+      name: preset.toUpperCase()
+    }));
+    renderEnergyDiagramSVG(svg, energyCurves);
+  } else {
+    // No diagram needed, clear
+    svg.innerHTML = '';
+  }
 }
 
 // ============== Export Functions ==============
