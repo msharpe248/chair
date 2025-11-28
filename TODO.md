@@ -12,9 +12,6 @@
 
 ## Pending
 
-### High Priority
-- [ ] Animation - Smooth ring flip animation showing pathway through boat
-
 ### Medium Priority
 - [ ] SMILES Input - Enter a SMILES string to generate the chair
 - [ ] Dark Mode - For late-night studying
