@@ -31,6 +31,13 @@ let currentMode = 'cyclohexane';
 let selectedCarbon = null;
 let selectedPosition = 'axial';
 
+// Zoom state
+const DEFAULT_VIEWBOX = { x: 0, y: 0, width: 400, height: 350 };
+let zoomLevel = 1;
+const ZOOM_MIN = 0.5;
+const ZOOM_MAX = 3;
+const ZOOM_STEP = 0.25;
+
 // DOM Elements
 let svg;
 let picker;
@@ -99,6 +106,19 @@ function setupEventListeners() {
   // Decalin controls
   document.getElementById('trans-btn').addEventListener('click', () => handleDecalinTypeChange('trans'));
   document.getElementById('cis-btn').addEventListener('click', () => handleDecalinTypeChange('cis'));
+
+  // Zoom controls
+  document.getElementById('zoom-in-btn').addEventListener('click', () => handleZoom(ZOOM_STEP));
+  document.getElementById('zoom-out-btn').addEventListener('click', () => handleZoom(-ZOOM_STEP));
+  document.getElementById('zoom-reset-btn').addEventListener('click', resetZoom);
+
+  // Mouse wheel zoom
+  const chairContainer = document.querySelector('.chair-container');
+  chairContainer.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+    handleZoom(delta);
+  }, { passive: false });
 }
 
 /**
@@ -390,6 +410,40 @@ function updateSubstituentsList() {
     li.textContent = `${carbonLabel}: ${getSubstituentLabel(sub.group)} (${posLabel})`;
     list.appendChild(li);
   }
+}
+
+/**
+ * Handle zoom in/out
+ * @param {number} delta - Zoom change amount (positive = zoom in, negative = zoom out)
+ */
+function handleZoom(delta) {
+  const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomLevel + delta));
+  if (newZoom !== zoomLevel) {
+    zoomLevel = newZoom;
+    updateViewBox();
+  }
+}
+
+/**
+ * Reset zoom to default level
+ */
+function resetZoom() {
+  zoomLevel = 1;
+  updateViewBox();
+}
+
+/**
+ * Update SVG viewBox based on current zoom level
+ */
+function updateViewBox() {
+  const newWidth = DEFAULT_VIEWBOX.width / zoomLevel;
+  const newHeight = DEFAULT_VIEWBOX.height / zoomLevel;
+
+  // Center the viewBox
+  const newX = (DEFAULT_VIEWBOX.width - newWidth) / 2;
+  const newY = (DEFAULT_VIEWBOX.height - newHeight) / 2;
+
+  svg.setAttribute('viewBox', `${newX} ${newY} ${newWidth} ${newHeight}`);
 }
 
 // Initialize when DOM is ready
