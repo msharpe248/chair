@@ -24,10 +24,13 @@ import {
 
 import { createPyranoseState, changeSugarType, toggleAnomer } from './pyranose.js';
 import { createDecalinState, canFlip, getDecalinInfo, toggleDecalinType } from './decalin.js';
+import { renderNewman } from './newman.js';
 
 // Application State
 let state = createMoleculeState();
 let currentMode = 'cyclohexane';
+let currentView = 'chair';  // 'chair' or 'newman'
+let newmanBondIndex = 0;    // Which C-C bond to view in Newman projection
 let selectedCarbon = null;
 let selectedPosition = 'axial';
 
@@ -226,6 +229,14 @@ function setupEventListeners() {
   // Preset selector
   document.getElementById('preset-select').addEventListener('change', handlePresetChange);
 
+  // View toggle (Chair/Newman)
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => handleViewChange(e.target.dataset.view));
+  });
+
+  // Newman bond selector
+  document.getElementById('newman-bond-select').addEventListener('change', handleNewmanBondChange);
+
   // Zoom controls
   document.getElementById('zoom-in-btn').addEventListener('click', () => handleZoom(ZOOM_STEP));
   document.getElementById('zoom-out-btn').addEventListener('click', () => handleZoom(-ZOOM_STEP));
@@ -262,6 +273,13 @@ function handleModeChange(mode) {
   if (mode === currentMode) return;
 
   currentMode = mode;
+
+  // Reset to chair view when switching modes
+  currentView = 'chair';
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === 'chair');
+  });
+  document.getElementById('newman-bond-select').classList.add('hidden');
 
   // Update mode buttons
   document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -358,6 +376,34 @@ function handlePresetChange(e) {
 }
 
 /**
+ * Handle view change (Chair/Newman)
+ */
+function handleViewChange(view) {
+  if (view === currentView) return;
+
+  currentView = view;
+
+  // Update button states
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === view);
+  });
+
+  // Show/hide Newman bond selector
+  const bondSelect = document.getElementById('newman-bond-select');
+  bondSelect.classList.toggle('hidden', view !== 'newman');
+
+  renderView();
+}
+
+/**
+ * Handle Newman bond selection change
+ */
+function handleNewmanBondChange(e) {
+  newmanBondIndex = parseInt(e.target.value, 10);
+  renderView();
+}
+
+/**
  * Update decalin-specific UI elements
  */
 function updateDecalinUI() {
@@ -384,14 +430,19 @@ function renderView() {
   const showLabels = showLabelsCheckbox.checked;
   const showInteractions = showInteractionsCheckbox.checked;
 
-  render(svg, state, {
-    showLabels,
-    onCarbonClick: currentMode === 'cyclohexane' ? handleCarbonClick : null
-  });
+  // Check if we should render Newman projection (cyclohexane mode only)
+  if (currentMode === 'cyclohexane' && currentView === 'newman') {
+    renderNewman(svg, state, newmanBondIndex);
+  } else {
+    render(svg, state, {
+      showLabels,
+      onCarbonClick: currentMode === 'cyclohexane' ? handleCarbonClick : null
+    });
 
-  // Draw 1,3-diaxial interactions if enabled (cyclohexane mode only)
-  if (currentMode === 'cyclohexane' && showInteractions) {
-    draw13DiaxialInteractions(svg, state, state.flipped);
+    // Draw 1,3-diaxial interactions if enabled (cyclohexane chair view only)
+    if (currentMode === 'cyclohexane' && showInteractions) {
+      draw13DiaxialInteractions(svg, state, state.flipped);
+    }
   }
 
   if (currentMode === 'cyclohexane') {
@@ -794,6 +845,15 @@ function addInlineStyles(svgElement) {
     '.oxygen-bond': { stroke: '#dc2626', 'stroke-width': '2.5', 'stroke-linecap': 'round' },
     '.diaxial-interaction': { fill: 'none', stroke: '#ef4444', 'stroke-width': '2', 'stroke-dasharray': '4 2', opacity: '0.7' },
     '.diaxial-label': { 'font-size': '8px', fill: '#ef4444', 'font-weight': '500', 'font-family': 'sans-serif' },
+    '.newman-front-circle': { fill: '#ffffff', stroke: '#334155', 'stroke-width': '2.5' },
+    '.newman-center-dot': { fill: '#334155' },
+    '.newman-bond': { stroke: '#334155', 'stroke-width': '2.5', 'stroke-linecap': 'round' },
+    '.newman-back-bond': { stroke: '#64748b', 'stroke-width': '2' },
+    '.newman-label': { 'font-size': '12px', 'font-weight': '500', fill: '#1e293b', 'font-family': 'sans-serif' },
+    '.newman-back-label': { fill: '#64748b' },
+    '.newman-substituent-label': { fill: '#dc2626', 'font-weight': '600' },
+    '.newman-title': { 'font-size': '14px', 'font-weight': '600', fill: '#1e293b', 'font-family': 'sans-serif' },
+    '.newman-legend': { 'font-size': '11px', fill: '#64748b', 'font-family': 'sans-serif' },
   };
 
   for (const [selector, styleObj] of Object.entries(styles)) {

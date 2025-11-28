@@ -179,7 +179,7 @@ export function renderChair(svg, state, options = {}) {
     chairGroup.appendChild(labelsGroup);
 
     for (let i = 0; i < 6; i++) {
-      const axialDir = getAxialDirection(i, flipped);
+      const carbon = carbons[i];
       const axialPos = getSubstituentPosition(i, 'axial', flipped);
       const eqPos = getSubstituentPosition(i, 'equatorial', flipped);
 
@@ -188,22 +188,26 @@ export function renderChair(svg, state, options = {}) {
       const eqSub = getSubstituent(state, i, 'equatorial');
 
       if (!axialSub) {
+        // Put ax label exactly where H label would go
         const axLabel = createSVGElement('text', {
-          x: axialPos.labelX + (axialDir === 'up' ? 15 : 15),
+          x: axialPos.labelX,
           y: axialPos.labelY,
           class: 'ax-eq-label axial-label',
-          'text-anchor': 'start'
+          'text-anchor': 'middle',
+          'dominant-baseline': 'middle'
         });
         axLabel.textContent = 'ax';
         labelsGroup.appendChild(axLabel);
       }
 
       if (!eqSub) {
+        // Put eq label exactly where H label would go
         const eqLabel = createSVGElement('text', {
           x: eqPos.labelX,
-          y: eqPos.labelY + 12,
+          y: eqPos.labelY,
           class: 'ax-eq-label equatorial-label',
-          'text-anchor': 'middle'
+          'text-anchor': 'middle',
+          'dominant-baseline': 'middle'
         });
         eqLabel.textContent = 'eq';
         labelsGroup.appendChild(eqLabel);

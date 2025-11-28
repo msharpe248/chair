@@ -645,6 +645,96 @@ main {
   fill: var(--text-primary);
 }
 
+/* Newman Projection styles */
+.newman-front-circle {
+  fill: var(--surface);
+  stroke: var(--carbon-stroke);
+  stroke-width: 2.5;
+}
+
+.newman-center-dot {
+  fill: var(--carbon-stroke);
+}
+
+.newman-bond {
+  stroke: var(--bond-color);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.newman-back-bond {
+  stroke: var(--secondary-color);
+  stroke-width: 2;
+}
+
+.newman-axial {
+  stroke-dasharray: none;
+}
+
+.newman-label {
+  font-size: 12px;
+  font-weight: 500;
+  fill: var(--text-primary);
+}
+
+.newman-back-label {
+  fill: var(--text-secondary);
+}
+
+.newman-substituent-label {
+  fill: var(--substituent-color);
+  font-weight: 600;
+}
+
+.newman-title {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+
+.newman-legend {
+  font-size: 11px;
+  fill: var(--text-secondary);
+}
+
+/* Newman view toggle button */
+.view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.view-btn {
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--border-color);
+  background: var(--surface);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.view-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.view-btn.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.newman-bond-select {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--surface);
+}
+
 /* 1,3-Diaxial Interaction visualization */
 .diaxial-interaction {
   fill: none;

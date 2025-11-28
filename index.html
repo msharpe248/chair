@@ -21,6 +21,18 @@
     <section class="viewer-section">
       <!-- Mode-specific controls -->
       <div id="cyclohexane-controls" class="mode-controls">
+        <div class="view-toggle">
+          <button class="view-btn active" data-view="chair">Chair View</button>
+          <button class="view-btn" data-view="newman">Newman Projection</button>
+          <select id="newman-bond-select" class="newman-bond-select hidden">
+            <option value="0">C1–C2</option>
+            <option value="1">C2–C3</option>
+            <option value="2">C3–C4</option>
+            <option value="3">C4–C5</option>
+            <option value="4">C5–C6</option>
+            <option value="5">C6–C1</option>
+          </select>
+        </div>
         <div class="control-row">
           <label for="preset-select">Example:</label>
           <select id="preset-select">
