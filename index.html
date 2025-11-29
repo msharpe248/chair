@@ -16,6 +16,7 @@
         <option value="alkene">Alkene Stability</option>
         <option value="stereo">Stereochemistry Tracker</option>
         <option value="mechanism">Mechanism Animator</option>
+        <option value="nomenclature">IUPAC Nomenclature</option>
       </select>
     </div>
     <nav id="chair-mode-selector" class="mode-selector">
@@ -32,7 +33,9 @@
     <button id="energy-quiz-mode-btn" class="quiz-btn energy-only hidden">Quiz Mode</button>
     <button id="alkene-quiz-mode-btn" class="quiz-btn alkene-only hidden">Quiz Mode</button>
     <button id="stereo-quiz-mode-btn" class="quiz-btn stereo-only hidden">Quiz Mode</button>
-    <button id="mechanism-quiz-mode-btn" class="quiz-btn mechanism-only hidden">Quiz Mode</button>
+    <button id="mechanism-quiz-mode-btn" class="quiz-btn mechanism-only hidden">Mechanism Quiz</button>
+    <button id="reagent-quiz-mode-btn" class="quiz-btn mechanism-only hidden">Reagent Quiz</button>
+    <button id="nomenclature-quiz-mode-btn" class="quiz-btn nomenclature-only hidden">Quiz Mode</button>
   </header>
 
   <main>
@@ -443,9 +446,18 @@
               <option value="e2">E2 (Bimolecular)</option>
               <option value="e1">E1 (Unimolecular)</option>
             </optgroup>
-            <optgroup label="Addition">
+            <optgroup label="Addition (Markovnikov)">
               <option value="addition-hbr">HBr Addition</option>
               <option value="addition-br2">Br₂ Addition</option>
+              <option value="addition-halohydrin">Halohydrin (Br₂/H₂O)</option>
+            </optgroup>
+            <optgroup label="Addition (Anti-Markovnikov)">
+              <option value="addition-hbr-peroxide">HBr + Peroxides (Radical)</option>
+              <option value="addition-hydroboration">Hydroboration-Oxidation</option>
+            </optgroup>
+            <optgroup label="Carbocation Rearrangements">
+              <option value="rearrangement-hydride">1,2-Hydride Shift</option>
+              <option value="rearrangement-methyl">1,2-Methyl Shift</option>
             </optgroup>
           </select>
         </div>
@@ -462,6 +474,37 @@
             <input type="checkbox" id="mechanism-show-arrows" checked>
             Show electron flow arrows
           </label>
+        </div>
+      </div>
+
+      <!-- IUPAC Nomenclature Controls (hidden by default) -->
+      <div id="nomenclature-controls" class="mode-controls hidden">
+        <div class="control-row">
+          <label for="nomenclature-class-select">Compound Class:</label>
+          <select id="nomenclature-class-select">
+            <option value="all">All Classes</option>
+            <option value="alkanes">Alkanes</option>
+            <option value="alkenes">Alkenes</option>
+            <option value="alcohols">Alcohols</option>
+            <option value="alkylHalides">Alkyl Halides</option>
+            <option value="cyclic">Cyclic Compounds</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="nomenclature-difficulty-select">Difficulty:</label>
+          <select id="nomenclature-difficulty-select">
+            <option value="all">All Levels</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <div class="nomenclature-mode-toggle">
+          <button class="nomenclature-mode-btn active" data-mode="practice">Practice</button>
+          <button class="nomenclature-mode-btn" data-mode="rules">Naming Rules</button>
+        </div>
+        <div class="control-row">
+          <button id="nomenclature-new-btn" class="primary-btn">New Compound</button>
         </div>
       </div>
 
@@ -882,6 +925,82 @@
           <div class="quiz-actions">
             <button id="mechanism-new-question-btn" class="primary-btn">New Question</button>
             <button id="mechanism-submit-btn" class="primary-btn" disabled>Submit</button>
+          </div>
+        </div>
+
+        <!-- Reagent Quiz Panel -->
+        <div id="reagent-quiz-panel" class="energy-quiz-panel hidden">
+          <div class="quiz-header">
+            <h4>Reagent Identification Quiz</h4>
+            <div class="quiz-score">Score: <span id="reagent-quiz-score">0/0</span></div>
+          </div>
+          <div class="quiz-question-area">
+            <p id="reagent-quiz-question" class="quiz-question">Click "New Question" to start!</p>
+            <div id="reagent-quiz-options" class="quiz-options"></div>
+            <div id="reagent-quiz-feedback" class="quiz-feedback hidden"></div>
+          </div>
+          <div class="quiz-actions">
+            <button id="reagent-new-question-btn" class="primary-btn">New Question</button>
+            <button id="reagent-submit-btn" class="primary-btn" disabled>Submit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- IUPAC Nomenclature Panel -->
+      <div id="nomenclature-panel" class="energy-display hidden">
+        <h3>IUPAC Nomenclature</h3>
+
+        <!-- Current Compound Info -->
+        <div id="nomenclature-compound-info" class="nomenclature-info">
+          <div class="info-row">
+            <span>Class:</span>
+            <span id="nomenclature-class">—</span>
+          </div>
+          <div class="info-row">
+            <span>Difficulty:</span>
+            <span id="nomenclature-level">—</span>
+          </div>
+        </div>
+
+        <!-- Naming Rules Display -->
+        <div id="nomenclature-rules" class="nomenclature-rules">
+          <h4>Naming Steps</h4>
+          <ol id="nomenclature-rules-list" class="rules-list">
+            <li>Find longest carbon chain (parent)</li>
+            <li>Number from end nearest substituent</li>
+            <li>Name and locate substituents</li>
+            <li>List alphabetically with locants</li>
+          </ol>
+        </div>
+
+        <!-- Common Name (if exists) -->
+        <div id="nomenclature-common" class="nomenclature-common hidden">
+          <h4>Common Name</h4>
+          <span id="nomenclature-common-name">—</span>
+        </div>
+
+        <!-- E/Z Stereochem Info -->
+        <div id="nomenclature-stereo" class="nomenclature-stereo hidden">
+          <h4>E/Z Stereochemistry</h4>
+          <p id="nomenclature-stereo-info">
+            E = opposite sides (entgegen), Z = same side (zusammen)
+          </p>
+        </div>
+
+        <!-- Nomenclature Quiz Panel -->
+        <div id="nomenclature-quiz-panel" class="energy-quiz-panel hidden">
+          <div class="quiz-header">
+            <h4>Nomenclature Quiz</h4>
+            <div class="quiz-score">Score: <span id="nomenclature-quiz-score">0/0</span></div>
+          </div>
+          <div class="quiz-question-area">
+            <p id="nomenclature-quiz-question" class="quiz-question">Click "New Question" to start!</p>
+            <div id="nomenclature-quiz-options" class="quiz-options"></div>
+            <div id="nomenclature-quiz-feedback" class="quiz-feedback hidden"></div>
+          </div>
+          <div class="quiz-actions">
+            <button id="nomenclature-new-question-btn" class="primary-btn">New Question</button>
+            <button id="nomenclature-submit-btn" class="primary-btn" disabled>Submit</button>
           </div>
         </div>
       </div>

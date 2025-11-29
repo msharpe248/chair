@@ -313,6 +313,310 @@ export const MECHANISMS = {
       'Works with Cl₂ similarly',
       'Used as test for unsaturation'
     ]
+  },
+
+  // ===== CARBOCATION REARRANGEMENTS =====
+
+  'rearrangement-hydride': {
+    name: '1,2-Hydride Shift',
+    description: 'Carbocation rearrangement via hydride migration',
+    type: 'rearrangement',
+    steps: [
+      {
+        title: 'Step 1: Carbocation Formation',
+        description: 'Leaving group departs, forming initial carbocation',
+        structures: {
+          substrate: { carbon: 'C', groups: ['H', 'R', 'CH(CH₃)₂'], leavingGroup: 'Br' }
+        },
+        arrows: [
+          { from: 'carbon-lg', to: 'leavingGroup', type: 'full', label: 'LG leaves' }
+        ],
+        intermediate: { type: 'carbocation', stability: '2°' },
+        notes: [
+          'Secondary carbocation forms',
+          'Adjacent carbon has H and more substituents'
+        ]
+      },
+      {
+        title: 'Step 2: 1,2-Hydride Shift',
+        description: 'Hydride migrates with its bonding electrons to adjacent carbocation',
+        structures: {
+          carbocation: { carbon: 'C⁺', adjacent: 'C-H' }
+        },
+        arrows: [
+          { from: 'c-h', to: 'carbocation', type: 'full', label: 'H⁻ migrates' }
+        ],
+        intermediate: { type: 'carbocation', stability: '3°' },
+        notes: [
+          'H moves WITH its electrons',
+          '2° → 3° carbocation',
+          'More stable carbocation forms'
+        ]
+      },
+      {
+        title: 'Step 3: Product Formation',
+        description: 'Nucleophile attacks rearranged carbocation',
+        structures: {
+          carbocation: { carbon: 'C⁺', position: 'rearranged' },
+          nucleophile: 'Nu⁻'
+        },
+        arrows: [
+          { from: 'nucleophile', to: 'carbocation', type: 'full', label: 'Nu attacks' }
+        ],
+        notes: [
+          'Product has different connectivity',
+          'Substitution at different carbon than expected'
+        ]
+      }
+    ],
+    products: ['Rearranged product'],
+    keyPoints: [
+      'Occurs when more stable carbocation can form',
+      'Hydride (H:⁻) migrates with bonding electrons',
+      '2° → 3° is favorable (~15 kcal/mol)',
+      '1° → 2° or 1° → 3° also favorable'
+    ]
+  },
+
+  'rearrangement-methyl': {
+    name: '1,2-Methyl Shift',
+    description: 'Carbocation rearrangement via methyl migration',
+    type: 'rearrangement',
+    steps: [
+      {
+        title: 'Step 1: Carbocation Formation',
+        description: 'Leaving group departs, forming initial carbocation',
+        structures: {
+          substrate: { carbon: 'C', groups: ['H', 'H', 'C(CH₃)₃'], leavingGroup: 'Br' }
+        },
+        arrows: [
+          { from: 'carbon-lg', to: 'leavingGroup', type: 'full', label: 'LG leaves' }
+        ],
+        intermediate: { type: 'carbocation', stability: '1°' },
+        notes: [
+          'Primary carbocation forms (very unstable)',
+          'Adjacent quaternary carbon has methyl groups'
+        ]
+      },
+      {
+        title: 'Step 2: 1,2-Methyl Shift',
+        description: 'Methyl group migrates with its bonding electrons',
+        structures: {
+          carbocation: { carbon: 'C⁺', adjacent: 'C-CH₃' }
+        },
+        arrows: [
+          { from: 'c-ch3', to: 'carbocation', type: 'full', label: 'CH₃⁻ migrates' }
+        ],
+        intermediate: { type: 'carbocation', stability: '3°' },
+        notes: [
+          'Methyl moves WITH its electrons',
+          '1° → 3° carbocation!',
+          'Huge stability gain'
+        ]
+      },
+      {
+        title: 'Step 3: Product Formation',
+        description: 'Nucleophile attacks rearranged carbocation',
+        structures: {
+          carbocation: { carbon: 'C⁺', position: 'rearranged' },
+          nucleophile: 'Nu⁻'
+        },
+        arrows: [
+          { from: 'nucleophile', to: 'carbocation', type: 'full', label: 'Nu attacks' }
+        ],
+        notes: [
+          'Product skeleton is rearranged',
+          'Classic example: neopentyl → t-amyl'
+        ]
+      }
+    ],
+    products: ['Rearranged product'],
+    keyPoints: [
+      'Occurs when adjacent carbon has alkyl groups',
+      'Methyl (CH₃:⁻) migrates with bonding electrons',
+      'Especially important for neopentyl systems',
+      '1° → 3° rearrangement is very favorable'
+    ]
+  },
+
+  // ===== ANTI-MARKOVNIKOV ADDITIONS =====
+
+  'addition-hbr-peroxide': {
+    name: 'HBr + Peroxides (Radical Addition)',
+    description: 'Anti-Markovnikov addition via radical mechanism',
+    type: 'addition',
+    regiochemistry: 'anti-markovnikov',
+    steps: [
+      {
+        title: 'Initiation: Radical Formation',
+        description: 'Peroxide breaks homolytically, abstracts H from HBr',
+        structures: {
+          peroxide: { formula: 'RO-OR' },
+          hbr: { formula: 'H-Br' }
+        },
+        arrows: [
+          { from: 'o-o', to: 'radicals', type: 'fishhook', label: 'Homolysis' },
+          { from: 'ro-radical', to: 'h-br', type: 'fishhook', label: 'H abstraction' }
+        ],
+        intermediate: { type: 'radical', species: 'Br•' },
+        notes: [
+          'ROOR → 2 RO• (homolytic cleavage)',
+          'RO• + HBr → ROH + Br•',
+          'Br radical is the active species'
+        ]
+      },
+      {
+        title: 'Propagation 1: Br• Addition',
+        description: 'Br radical adds to LESS substituted carbon',
+        structures: {
+          alkene: { c1: 'C', c2: 'C', doubleBond: true },
+          radical: 'Br•'
+        },
+        arrows: [
+          { from: 'br-radical', to: 'less-sub-c', type: 'fishhook', label: 'Br• adds' }
+        ],
+        intermediate: { type: 'carbon radical', stability: 'more stable' },
+        notes: [
+          'Br• adds to less substituted C',
+          'MORE stable carbon radical forms',
+          'This is OPPOSITE of ionic mechanism!'
+        ]
+      },
+      {
+        title: 'Propagation 2: H Abstraction',
+        description: 'Carbon radical abstracts H from HBr',
+        structures: {
+          carbonRadical: { carbon: 'C•', groups: ['Br', 'R'] },
+          hbr: 'H-Br'
+        },
+        arrows: [
+          { from: 'c-radical', to: 'h-br', type: 'fishhook', label: 'H abstraction' }
+        ],
+        notes: [
+          'Product formed + new Br•',
+          'Chain continues',
+          'Net: anti-Markovnikov addition'
+        ]
+      }
+    ],
+    products: ['Anti-Markovnikov alkyl bromide'],
+    keyPoints: [
+      'ONLY works with HBr (not HCl or HI)',
+      'Peroxides required (ROOR)',
+      'Radical mechanism reverses regiochemistry',
+      'Br adds to LESS substituted carbon'
+    ]
+  },
+
+  'addition-hydroboration': {
+    name: 'Hydroboration-Oxidation',
+    description: 'Anti-Markovnikov syn addition of H-OH',
+    type: 'addition',
+    regiochemistry: 'anti-markovnikov',
+    stereochemistry: 'syn',
+    steps: [
+      {
+        title: 'Step 1: Hydroboration',
+        description: 'Concerted syn addition of B-H across double bond',
+        structures: {
+          alkene: { c1: 'C', c2: 'C', doubleBond: true },
+          borane: 'BH₃'
+        },
+        arrows: [
+          { from: 'pi-bond', to: 'b', type: 'full', label: 'π → B' },
+          { from: 'b-h', to: 'c', type: 'full', label: 'H → C' }
+        ],
+        intermediate: { type: 'alkylborane' },
+        notes: [
+          'Concerted 4-membered transition state',
+          'B adds to LESS substituted C',
+          'H adds to MORE substituted C',
+          'SYN addition (same face)'
+        ]
+      },
+      {
+        title: 'Step 2: Oxidation',
+        description: 'Boron replaced by OH with retention of configuration',
+        structures: {
+          alkylborane: { carbon: 'C-B' },
+          oxidizer: 'H₂O₂, NaOH'
+        },
+        arrows: [
+          { from: 'hoo-minus', to: 'b', type: 'full', label: 'HOO⁻ attacks B' },
+          { from: 'c-b', to: 'c-o', type: 'full', label: 'Migration' }
+        ],
+        notes: [
+          'B replaced by OH',
+          'Retention of configuration',
+          'Net result: H-OH added syn, anti-Markovnikov'
+        ]
+      }
+    ],
+    products: ['Anti-Markovnikov alcohol (syn addition)'],
+    keyPoints: [
+      'Net addition of H-OH',
+      'Anti-Markovnikov: OH on LESS substituted C',
+      'Syn stereochemistry (both add same face)',
+      'Complementary to acid-catalyzed hydration'
+    ]
+  },
+
+  'addition-halohydrin': {
+    name: 'Halohydrin Formation',
+    description: 'Addition of Br₂/H₂O giving bromohydrin',
+    type: 'addition',
+    steps: [
+      {
+        title: 'Step 1: Bromonium Ion Formation',
+        description: 'Same as bromination - cyclic bromonium ion forms',
+        structures: {
+          alkene: { c1: 'C', c2: 'C', doubleBond: true },
+          electrophile: 'Br₂'
+        },
+        arrows: [
+          { from: 'pi-bond', to: 'br-br', type: 'full', label: 'π attacks Br' }
+        ],
+        intermediate: { type: 'bromonium', note: 'Three-membered ring' },
+        notes: [
+          'Bromonium ion forms as usual',
+          'But now H₂O is the nucleophile'
+        ]
+      },
+      {
+        title: 'Step 2: Water Attack',
+        description: 'Water attacks more substituted carbon (Markovnikov-like)',
+        structures: {
+          bromonium: { ring: 'cyclic' },
+          nucleophile: 'H₂O'
+        },
+        arrows: [
+          { from: 'water', to: 'more-sub-c', type: 'full', label: 'H₂O attacks' }
+        ],
+        notes: [
+          'Water attacks MORE substituted C',
+          'More δ⁺ character at more substituted C',
+          'Anti addition (opposite face)'
+        ]
+      },
+      {
+        title: 'Step 3: Deprotonation',
+        description: 'Loss of proton gives bromohydrin',
+        arrows: [
+          { from: 'base', to: 'oxonium-h', type: 'full', label: 'Deprotonation' }
+        ],
+        notes: [
+          'Product: bromohydrin',
+          'Br and OH are anti and on adjacent carbons'
+        ]
+      }
+    ],
+    products: ['Bromohydrin (anti addition)'],
+    keyPoints: [
+      'Br₂ in H₂O (or NBS/H₂O)',
+      'OH goes to MORE substituted C',
+      'Br goes to LESS substituted C',
+      'Anti stereochemistry'
+    ]
   }
 };
 
@@ -393,7 +697,9 @@ export function generateMechanismQuestion() {
     'predict-product',
     'identify-intermediate',
     'mechanism-step',
-    'stereochemistry'
+    'stereochemistry',
+    'rearrangement',
+    'addition-regiochem'
   ];
 
   const type = questionTypes[Math.floor(Math.random() * questionTypes.length)];
@@ -409,6 +715,10 @@ export function generateMechanismQuestion() {
       return generateStepQuestion();
     case 'stereochemistry':
       return generateStereoQuestion();
+    case 'rearrangement':
+      return generateRearrangementQuestion();
+    case 'addition-regiochem':
+      return generateAdditionRegiochemQuestion();
     default:
       return generateIdentifyMechanismQuestion();
   }
@@ -581,6 +891,144 @@ function generateStereoQuestion() {
 
   return {
     type: 'stereochemistry',
+    question: q.question,
+    options: q.options.map(opt => ({ value: opt, label: opt.charAt(0).toUpperCase() + opt.slice(1) })),
+    correctAnswer: q.answer,
+    explanation: q.explanation
+  };
+}
+
+function generateRearrangementQuestion() {
+  const questions = [
+    {
+      question: 'Will neopentyl bromide ((CH₃)₃CCH₂Br) undergo rearrangement under SN1 conditions?',
+      answer: 'yes',
+      options: ['yes', 'no'],
+      explanation: 'Yes! The initial 1° carbocation is very unstable. A 1,2-methyl shift gives a much more stable 3° carbocation.'
+    },
+    {
+      question: 'What type of shift occurs when 2-bromo-3-methylbutane undergoes SN1?',
+      answer: 'hydride',
+      options: ['hydride shift', 'methyl shift', 'no shift', 'alkyl shift'],
+      explanation: '1,2-Hydride shift: H migrates from C3 to C2, converting 2° carbocation to more stable 3° carbocation.'
+    },
+    {
+      question: 'A 2° carbocation is adjacent to a quaternary carbon. What type of rearrangement occurs?',
+      answer: 'methyl',
+      options: ['hydride shift', 'methyl shift', 'no shift', 'both possible'],
+      explanation: 'Methyl shift: No H available on the quaternary carbon, so a methyl group migrates to give a 3° carbocation.'
+    },
+    {
+      question: 'Why do carbocation rearrangements occur?',
+      answer: 'stability',
+      options: ['To form more stable carbocation', 'To form less stable carbocation', 'Random process', 'Temperature dependent'],
+      explanation: 'Rearrangements occur to form more stable carbocations. 3° > 2° > 1° in stability due to hyperconjugation and inductive effects.'
+    },
+    {
+      question: 'A tertiary alkyl bromide undergoes SN1. Will it rearrange?',
+      answer: 'no',
+      options: ['yes', 'no', 'maybe', 'always'],
+      explanation: 'No rearrangement. The 3° carbocation is already the most stable possible; there\'s no driving force for rearrangement.'
+    },
+    {
+      question: 'In a 1,2-hydride shift, what happens to the migrating hydrogen?',
+      answer: 'moves with electrons',
+      options: ['Moves with both electrons', 'Moves as H⁺', 'Moves as H•', 'Leaves the molecule'],
+      explanation: 'The H moves with its bonding electrons (as H:⁻) to the adjacent carbocation center.'
+    },
+    {
+      question: 'Which substrate would most likely undergo rearrangement in SN1?',
+      answer: 'neopentyl',
+      options: ['tert-butyl bromide', 'neopentyl bromide', '2-bromobutane', 'bromocyclohexane'],
+      explanation: 'Neopentyl bromide: Forms 1° carbocation initially, which readily rearranges via methyl shift to 3° carbocation.'
+    },
+    {
+      question: 'What is the driving force for carbocation rearrangement?',
+      answer: 'thermodynamics',
+      options: ['Kinetics only', 'Thermodynamics - stability', 'Entropy', 'Solvent effects'],
+      explanation: 'Thermodynamics: The more substituted carbocation is lower in energy, making rearrangement favorable.'
+    }
+  ];
+
+  const q = questions[Math.floor(Math.random() * questions.length)];
+
+  return {
+    type: 'rearrangement',
+    question: q.question,
+    options: q.options.map(opt => ({ value: opt, label: opt.charAt(0).toUpperCase() + opt.slice(1) })),
+    correctAnswer: q.answer,
+    explanation: q.explanation
+  };
+}
+
+function generateAdditionRegiochemQuestion() {
+  const questions = [
+    {
+      question: 'What is the major product when propene reacts with HBr (no peroxides)?',
+      answer: '2-bromopropane',
+      options: ['1-bromopropane', '2-bromopropane', 'mixture', 'no reaction'],
+      explanation: 'Markovnikov addition: H adds to the less substituted carbon (C1), Br adds to the more substituted carbon (C2).'
+    },
+    {
+      question: 'What is the major product when propene reacts with HBr + ROOR (peroxides)?',
+      answer: '1-bromopropane',
+      options: ['1-bromopropane', '2-bromopropane', 'mixture', 'no reaction'],
+      explanation: 'Anti-Markovnikov (radical mechanism): Br• adds to less substituted carbon first, giving 1-bromopropane.'
+    },
+    {
+      question: 'Why does HBr + peroxides give anti-Markovnikov addition?',
+      answer: 'radical stability',
+      options: ['Carbocation stability', 'Radical stability', 'Steric effects', 'Polar effects'],
+      explanation: 'Radical mechanism: Br• adds to form the MORE stable carbon radical (on the more substituted carbon), then H is abstracted.'
+    },
+    {
+      question: 'What reagents give anti-Markovnikov hydration of alkenes?',
+      answer: 'hydroboration',
+      options: ['H₂O/H⁺', 'BH₃ then H₂O₂/NaOH', 'HBr', 'Br₂/H₂O'],
+      explanation: 'Hydroboration-oxidation: BH₃ adds with B going to less substituted C, then oxidation replaces B with OH.'
+    },
+    {
+      question: 'What is the stereochemistry of hydroboration-oxidation?',
+      answer: 'syn',
+      options: ['syn', 'anti', 'mixture', 'inversion'],
+      explanation: 'Syn addition: Both B and H add to the same face in the concerted hydroboration step. Oxidation proceeds with retention.'
+    },
+    {
+      question: 'In Markovnikov addition of HX to alkenes, where does H+ add?',
+      answer: 'less substituted',
+      options: ['More substituted carbon', 'Less substituted carbon', 'Random', 'Terminal carbon only'],
+      explanation: 'H⁺ adds to the less substituted carbon, generating the more stable (more substituted) carbocation.'
+    },
+    {
+      question: 'What is the intermediate in HBr addition to alkenes (no peroxides)?',
+      answer: 'carbocation',
+      options: ['Carbocation', 'Radical', 'Carbanion', 'Bromonium ion'],
+      explanation: 'Carbocation intermediate: H⁺ adds first to form the more stable carbocation, then Br⁻ attacks.'
+    },
+    {
+      question: 'What product forms when 1-butene reacts with H₂O/H⁺?',
+      answer: '2-butanol',
+      options: ['1-butanol', '2-butanol', 'butanal', 'no reaction'],
+      explanation: 'Markovnikov hydration: H₂O adds across the double bond with OH on the more substituted carbon.'
+    },
+    {
+      question: 'What is the regiochemistry of Br₂/H₂O (halohydrin formation)?',
+      answer: 'OH more substituted',
+      options: ['OH on more substituted C', 'OH on less substituted C', 'Random', 'No selectivity'],
+      explanation: 'Markovnikov-like: Water attacks the more substituted carbon of the bromonium ion (more δ⁺ character).'
+    },
+    {
+      question: 'Which statement about Markovnikov\'s rule is correct?',
+      answer: 'carbocation stability',
+      options: ['H goes to C with more H\'s', 'Based on carbocation stability', 'Only applies to HBr', 'Random preference'],
+      explanation: 'Markovnikov\'s rule reflects carbocation stability: the reaction proceeds through the more stable carbocation intermediate.'
+    }
+  ];
+
+  const q = questions[Math.floor(Math.random() * questions.length)];
+
+  return {
+    type: 'addition-regiochem',
     question: q.question,
     options: q.options.map(opt => ({ value: opt, label: opt.charAt(0).toUpperCase() + opt.slice(1) })),
     correctAnswer: q.answer,

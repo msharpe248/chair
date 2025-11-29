@@ -40,6 +40,9 @@ import { renderSN2Mechanism, renderSN1Mechanism, renderRelationshipDiagram } fro
 import { MECHANISMS, getMechanism, getStepData, generateMechanismQuestion, checkMechanismAnswer } from './mechanism-animator.js';
 import { renderMechanism, renderSN2Mechanism as renderMechSN2, renderSN1Mechanism as renderMechSN1, renderE2Mechanism as renderMechE2, renderAdditionMechanism, renderBrominationMechanism } from './mechanism-renderer.js';
 import { initBuilder } from './smiles-builder.js';
+import { NOMENCLATURE_DATA, getAllCompounds, getCompoundsByDifficulty, getCompoundsByClass, generateNomenclatureQuestion, checkNomenclatureAnswer, NAMING_RULES, getNamingRules } from './nomenclature.js';
+import { renderMolecule, renderNomenclatureQuiz, renderEZExplanation, renderNamingRules } from './nomenclature-renderer.js';
+import { REAGENT_DATA, getAllReagents, getReagentsByCategory, generateReagentQuestion, checkReagentAnswer } from './reagents.js';
 
 console.log('app.js module loaded - all imports successful');
 
@@ -134,8 +137,22 @@ let mechanismStep = 0;
 let mechanismShowArrows = true;
 let mechanismQuizActive = false;
 let mechanismQuizScore = { correct: 0, total: 0 };
+
+// Nomenclature state
+let nomenclatureClass = 'all';
+let nomenclatureDifficulty = 'all';
+let nomenclatureMode = 'practice';  // 'practice' or 'rules'
+let nomenclatureCurrentCompound = null;
+let nomenclatureQuizActive = false;
+let nomenclatureQuizScore = { correct: 0, total: 0 };
+let nomenclatureCurrentQuestion = null;
 let currentMechanismQuestion = null;
 let selectedMechanismAnswer = null;
+
+// Reagent quiz state
+let reagentQuizActive = false;
+let reagentQuizScore = { correct: 0, total: 0 };
+let reagentCurrentQuestion = null;
 
 // Preset definitions for cyclohexane examples
 const PRESETS = {
@@ -514,6 +531,22 @@ function setupEventListeners() {
   document.getElementById('mechanism-quiz-mode-btn').addEventListener('click', toggleMechanismQuizMode);
   document.getElementById('mechanism-new-question-btn').addEventListener('click', handleMechanismNewQuestion);
   document.getElementById('mechanism-submit-btn').addEventListener('click', handleMechanismSubmitAnswer);
+
+  // Nomenclature viewer controls
+  document.getElementById('nomenclature-class-select').addEventListener('change', handleNomenclatureClassChange);
+  document.getElementById('nomenclature-difficulty-select').addEventListener('change', handleNomenclatureDifficultyChange);
+  document.querySelectorAll('.nomenclature-mode-btn').forEach(btn => {
+    btn.addEventListener('click', handleNomenclatureModeToggle);
+  });
+  document.getElementById('nomenclature-new-btn').addEventListener('click', handleNewNomenclatureCompound);
+  document.getElementById('nomenclature-quiz-mode-btn').addEventListener('click', toggleNomenclatureQuizMode);
+  document.getElementById('nomenclature-new-question-btn').addEventListener('click', handleNomenclatureNewQuestion);
+  document.getElementById('nomenclature-submit-btn').addEventListener('click', handleNomenclatureSubmitAnswer);
+
+  // Reagent quiz controls
+  document.getElementById('reagent-quiz-mode-btn').addEventListener('click', toggleReagentQuizMode);
+  document.getElementById('reagent-new-question-btn').addEventListener('click', handleReagentNewQuestion);
+  document.getElementById('reagent-submit-btn').addEventListener('click', handleReagentSubmitAnswer);
 
   // Initialize theme
   initTheme();
@@ -1318,6 +1351,16 @@ function handleViewerChange(e) {
   const mechanismPanel = document.getElementById('mechanism-panel');
   mechanismPanel.classList.add('hidden');
 
+  // Hide nomenclature-only elements by default
+  document.querySelectorAll('.nomenclature-only').forEach(el => {
+    el.style.display = 'none';
+    el.classList.add('hidden');
+  });
+
+  // Hide nomenclature panel by default
+  const nomenclaturePanel = document.getElementById('nomenclature-panel');
+  nomenclaturePanel.classList.add('hidden');
+
   if (currentViewer === 'chair') {
     // Show chair-specific controls based on current mode
     if (currentMode === 'cyclohexane') {
@@ -1450,6 +1493,28 @@ function handleViewerChange(e) {
     // Render mechanism view
     console.log('About to call renderMechanismView');
     renderMechanismView();
+  } else if (currentViewer === 'nomenclature') {
+    // Show nomenclature controls
+    document.getElementById('nomenclature-controls').classList.remove('hidden');
+    energyPanel.classList.add('hidden');
+    decalinPanel.classList.add('hidden');
+    reactionPanel.classList.add('hidden');
+    document.getElementById('nomenclature-panel').classList.remove('hidden');
+
+    // Show nomenclature quiz button, hide others
+    document.querySelectorAll('.nomenclature-only').forEach(el => {
+      el.style.display = '';
+      el.classList.remove('hidden');
+    });
+
+    // Reset SVG viewBox and transforms for nomenclature viewer
+    const svg = document.getElementById('chair-svg');
+    svg.setAttribute('viewBox', '0 0 500 350');
+    svg.style.transform = '';
+
+    // Render nomenclature view
+    console.log('About to call renderNomenclatureView');
+    renderNomenclatureView();
   }
   } catch (error) {
     console.error('Error in handleViewerChange:', error);
@@ -3209,6 +3274,511 @@ function downloadFile(url, filename) {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+// ============== Nomenclature Functions ==============
+
+/**
+ * Render nomenclature view
+ */
+function renderNomenclatureView() {
+  console.log('renderNomenclatureView called');
+  const svg = document.getElementById('chair-svg');
+  svg.innerHTML = '';
+
+  try {
+    if (nomenclatureQuizActive) {
+      // Quiz mode - show the current question
+      if (nomenclatureCurrentQuestion) {
+        renderNomenclatureQuiz(svg, nomenclatureCurrentQuestion);
+      } else {
+        // Generate first question
+        handleNomenclatureNewQuestion();
+      }
+    } else if (nomenclatureMode === 'rules') {
+      // Show naming rules for selected class
+      const ruleClass = nomenclatureClass === 'all' ? 'alkanes' : nomenclatureClass;
+      renderNamingRules(svg, ruleClass);
+      updateNomenclatureRulesPanel(ruleClass);
+    } else {
+      // Practice mode - show a compound
+      if (!nomenclatureCurrentCompound) {
+        selectNewCompound();
+      }
+      if (nomenclatureCurrentCompound) {
+        renderMolecule(svg, nomenclatureCurrentCompound.smiles, {
+          showName: true,
+          name: nomenclatureCurrentCompound.iupac
+        });
+        updateNomenclaturePanel();
+      }
+    }
+    console.log('renderNomenclatureView completed successfully');
+  } catch (error) {
+    console.error('Error in renderNomenclatureView:', error);
+  }
+}
+
+/**
+ * Select a new random compound based on current filters
+ */
+function selectNewCompound() {
+  let compounds;
+
+  if (nomenclatureClass === 'all') {
+    compounds = getAllCompounds();
+  } else {
+    compounds = getCompoundsByClass(nomenclatureClass);
+  }
+
+  if (nomenclatureDifficulty !== 'all') {
+    const level = parseInt(nomenclatureDifficulty, 10);
+    compounds = compounds.filter(c => c.difficulty === level);
+  }
+
+  if (compounds.length > 0) {
+    const randomIndex = Math.floor(Math.random() * compounds.length);
+    nomenclatureCurrentCompound = compounds[randomIndex];
+  }
+}
+
+/**
+ * Update nomenclature info panel
+ */
+function updateNomenclaturePanel() {
+  if (!nomenclatureCurrentCompound) return;
+
+  const compound = nomenclatureCurrentCompound;
+
+  // Update compound info
+  document.getElementById('nomenclature-class').textContent =
+    compound.class.charAt(0).toUpperCase() + compound.class.slice(1);
+  document.getElementById('nomenclature-level').textContent =
+    compound.difficulty === 1 ? 'Basic' : compound.difficulty === 2 ? 'Intermediate' : 'Advanced';
+
+  // Show/hide common name section
+  const commonSection = document.getElementById('nomenclature-common');
+  if (compound.common) {
+    commonSection.classList.remove('hidden');
+    document.getElementById('nomenclature-common-name').textContent = compound.common;
+  } else {
+    commonSection.classList.add('hidden');
+  }
+
+  // Show/hide stereochemistry section
+  const stereoSection = document.getElementById('nomenclature-stereo');
+  if (compound.stereochemistry) {
+    stereoSection.classList.remove('hidden');
+    document.getElementById('nomenclature-stereo-info').textContent = compound.stereochemistry;
+  } else {
+    stereoSection.classList.add('hidden');
+  }
+
+  // Hide rules panel in practice mode
+  document.getElementById('nomenclature-rules').classList.add('hidden');
+}
+
+/**
+ * Update naming rules panel
+ */
+function updateNomenclatureRulesPanel(ruleClass) {
+  const rules = getNamingRules(ruleClass);
+  const rulesList = document.getElementById('nomenclature-rules-list');
+  rulesList.innerHTML = '';
+
+  rules.forEach(rule => {
+    const li = document.createElement('li');
+    li.textContent = rule;
+    rulesList.appendChild(li);
+  });
+
+  document.getElementById('nomenclature-rules').classList.remove('hidden');
+  document.getElementById('nomenclature-common').classList.add('hidden');
+  document.getElementById('nomenclature-stereo').classList.add('hidden');
+
+  // Update class display
+  document.getElementById('nomenclature-class').textContent =
+    ruleClass.charAt(0).toUpperCase() + ruleClass.slice(1);
+  document.getElementById('nomenclature-level').textContent = 'Reference';
+}
+
+/**
+ * Handle compound class filter change
+ */
+function handleNomenclatureClassChange(e) {
+  nomenclatureClass = e.target.value;
+  if (nomenclatureMode === 'rules' && nomenclatureClass === 'all') {
+    // Default to alkanes for rules view
+    renderNamingRules(document.getElementById('chair-svg'), 'alkanes');
+    updateNomenclatureRulesPanel('alkanes');
+  } else if (nomenclatureMode === 'rules') {
+    renderNamingRules(document.getElementById('chair-svg'), nomenclatureClass);
+    updateNomenclatureRulesPanel(nomenclatureClass);
+  } else {
+    selectNewCompound();
+    renderNomenclatureView();
+  }
+}
+
+/**
+ * Handle difficulty filter change
+ */
+function handleNomenclatureDifficultyChange(e) {
+  nomenclatureDifficulty = e.target.value;
+  selectNewCompound();
+  renderNomenclatureView();
+}
+
+/**
+ * Handle mode toggle (practice vs rules)
+ */
+function handleNomenclatureModeToggle(e) {
+  const newMode = e.target.dataset.mode;
+  if (newMode === nomenclatureMode) return;
+
+  nomenclatureMode = newMode;
+
+  // Update button states
+  document.querySelectorAll('.nomenclature-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === newMode);
+  });
+
+  renderNomenclatureView();
+}
+
+/**
+ * Handle new compound button
+ */
+function handleNewNomenclatureCompound() {
+  selectNewCompound();
+  renderNomenclatureView();
+}
+
+/**
+ * Toggle nomenclature quiz mode
+ */
+function toggleNomenclatureQuizMode() {
+  nomenclatureQuizActive = !nomenclatureQuizActive;
+
+  const quizBtn = document.getElementById('nomenclature-quiz-mode-btn');
+  const quizPanel = document.getElementById('nomenclature-quiz-panel');
+  const compoundInfo = document.getElementById('nomenclature-compound-info');
+
+  quizBtn.classList.toggle('active', nomenclatureQuizActive);
+  quizPanel.classList.toggle('hidden', !nomenclatureQuizActive);
+  compoundInfo.classList.toggle('hidden', nomenclatureQuizActive);
+
+  if (nomenclatureQuizActive) {
+    handleNomenclatureNewQuestion();
+  } else {
+    renderNomenclatureView();
+  }
+}
+
+/**
+ * Handle new nomenclature question
+ */
+function handleNomenclatureNewQuestion() {
+  // Determine question type based on what's available
+  const questionTypes = ['naming', 'structure', 'error', 'ez'];
+  const randomType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+
+  nomenclatureCurrentQuestion = generateNomenclatureQuestion(randomType);
+
+  // Update quiz display
+  document.getElementById('nomenclature-quiz-question').textContent =
+    nomenclatureCurrentQuestion.question;
+
+  // Render options
+  const optionsContainer = document.getElementById('nomenclature-quiz-options');
+  optionsContainer.innerHTML = '';
+
+  nomenclatureCurrentQuestion.options.forEach((option, index) => {
+    const optionBtn = document.createElement('button');
+    optionBtn.className = 'quiz-option';
+    optionBtn.textContent = option;
+    optionBtn.dataset.index = index;
+    optionBtn.addEventListener('click', () => selectNomenclatureOption(optionBtn));
+    optionsContainer.appendChild(optionBtn);
+  });
+
+  // Reset state
+  document.getElementById('nomenclature-submit-btn').disabled = true;
+  document.getElementById('nomenclature-quiz-feedback').classList.add('hidden');
+
+  // Render the question visualization
+  const svg = document.getElementById('chair-svg');
+  renderNomenclatureQuiz(svg, nomenclatureCurrentQuestion);
+}
+
+/**
+ * Select a nomenclature quiz option
+ */
+function selectNomenclatureOption(selectedBtn) {
+  // Remove selection from all options
+  document.querySelectorAll('#nomenclature-quiz-options .quiz-option').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+
+  // Select clicked option
+  selectedBtn.classList.add('selected');
+
+  // Enable submit button
+  document.getElementById('nomenclature-submit-btn').disabled = false;
+}
+
+/**
+ * Handle nomenclature quiz answer submission
+ */
+function handleNomenclatureSubmitAnswer() {
+  const selectedOption = document.querySelector('#nomenclature-quiz-options .quiz-option.selected');
+  if (!selectedOption) return;
+
+  const selectedIndex = parseInt(selectedOption.dataset.index, 10);
+  const selectedAnswer = nomenclatureCurrentQuestion.options[selectedIndex];
+  const isCorrect = checkNomenclatureAnswer(selectedAnswer, nomenclatureCurrentQuestion);
+
+  // Update score
+  nomenclatureQuizScore.total++;
+  if (isCorrect) {
+    nomenclatureQuizScore.correct++;
+  }
+
+  // Update score display
+  document.getElementById('nomenclature-quiz-score').textContent =
+    `${nomenclatureQuizScore.correct}/${nomenclatureQuizScore.total}`;
+
+  // Show feedback
+  const feedback = document.getElementById('nomenclature-quiz-feedback');
+  feedback.classList.remove('hidden');
+  feedback.classList.toggle('correct', isCorrect);
+  feedback.classList.toggle('incorrect', !isCorrect);
+
+  if (isCorrect) {
+    feedback.innerHTML = '<strong>Correct!</strong>';
+  } else {
+    feedback.innerHTML = `<strong>Incorrect.</strong> The correct answer is: <em>${nomenclatureCurrentQuestion.answer}</em>`;
+    if (nomenclatureCurrentQuestion.explanation) {
+      feedback.innerHTML += `<br><small>${nomenclatureCurrentQuestion.explanation}</small>`;
+    }
+  }
+
+  // Highlight correct/incorrect options
+  document.querySelectorAll('#nomenclature-quiz-options .quiz-option').forEach(btn => {
+    const optionText = btn.textContent;
+    if (optionText === nomenclatureCurrentQuestion.answer) {
+      btn.classList.add('correct');
+    } else if (btn.classList.contains('selected') && !isCorrect) {
+      btn.classList.add('incorrect');
+    }
+    btn.disabled = true;
+  });
+
+  // Disable submit, enable new question
+  document.getElementById('nomenclature-submit-btn').disabled = true;
+}
+
+// ============== Reagent Quiz Functions ==============
+
+/**
+ * Toggle reagent quiz mode
+ */
+function toggleReagentQuizMode() {
+  reagentQuizActive = !reagentQuizActive;
+
+  const quizBtn = document.getElementById('reagent-quiz-mode-btn');
+  const quizPanel = document.getElementById('reagent-quiz-panel');
+  const mechanismQuizPanel = document.getElementById('mechanism-quiz-panel');
+  const mechanismQuizBtn = document.getElementById('mechanism-quiz-mode-btn');
+
+  quizBtn.classList.toggle('active', reagentQuizActive);
+  quizPanel.classList.toggle('hidden', !reagentQuizActive);
+
+  // Deactivate mechanism quiz if activating reagent quiz
+  if (reagentQuizActive && mechanismQuizActive) {
+    mechanismQuizActive = false;
+    mechanismQuizBtn.classList.remove('active');
+    mechanismQuizPanel.classList.add('hidden');
+  }
+
+  if (reagentQuizActive) {
+    handleReagentNewQuestion();
+  }
+}
+
+/**
+ * Handle new reagent question
+ */
+function handleReagentNewQuestion() {
+  reagentCurrentQuestion = generateReagentQuestion();
+
+  // Update quiz display
+  document.getElementById('reagent-quiz-question').textContent =
+    reagentCurrentQuestion.question;
+
+  // Render options
+  const optionsContainer = document.getElementById('reagent-quiz-options');
+  optionsContainer.innerHTML = '';
+
+  reagentCurrentQuestion.options.forEach((option, index) => {
+    const optionBtn = document.createElement('button');
+    optionBtn.className = 'quiz-option';
+    optionBtn.textContent = option;
+    optionBtn.dataset.index = index;
+    optionBtn.addEventListener('click', () => selectReagentOption(optionBtn));
+    optionsContainer.appendChild(optionBtn);
+  });
+
+  // Reset state
+  document.getElementById('reagent-submit-btn').disabled = true;
+  document.getElementById('reagent-quiz-feedback').classList.add('hidden');
+
+  // Show reagent info in the SVG area
+  renderReagentInfo(reagentCurrentQuestion);
+}
+
+/**
+ * Render reagent information in SVG
+ */
+function renderReagentInfo(question) {
+  const svg = document.getElementById('chair-svg');
+  svg.innerHTML = '';
+
+  // Create a text display for the reagent info
+  const titleText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  titleText.setAttribute('x', '250');
+  titleText.setAttribute('y', '50');
+  titleText.setAttribute('text-anchor', 'middle');
+  titleText.setAttribute('class', 'mechanism-title');
+  titleText.textContent = 'Reagent Identification';
+  svg.appendChild(titleText);
+
+  // If there's a reagent in the question, show its category
+  if (question.reagent) {
+    const categoryText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    categoryText.setAttribute('x', '250');
+    categoryText.setAttribute('y', '85');
+    categoryText.setAttribute('text-anchor', 'middle');
+    categoryText.setAttribute('class', 'mechanism-label');
+    categoryText.textContent = `Category: ${question.reagent.category}`;
+    svg.appendChild(categoryText);
+
+    // Show formula if identify or conditions question
+    if (question.type === 'conditions' || question.type === 'reaction') {
+      const formulaText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      formulaText.setAttribute('x', '250');
+      formulaText.setAttribute('y', '150');
+      formulaText.setAttribute('text-anchor', 'middle');
+      formulaText.setAttribute('font-size', '24');
+      formulaText.setAttribute('font-weight', 'bold');
+      formulaText.setAttribute('fill', '#2563eb');
+      formulaText.textContent = question.reagent.formula;
+      svg.appendChild(formulaText);
+
+      const nameText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      nameText.setAttribute('x', '250');
+      nameText.setAttribute('y', '180');
+      nameText.setAttribute('text-anchor', 'middle');
+      nameText.setAttribute('font-size', '14');
+      nameText.setAttribute('fill', '#64748b');
+      nameText.textContent = question.reagent.name;
+      svg.appendChild(nameText);
+    }
+
+    // For product questions, show the reaction type
+    if (question.type === 'product' || question.type === 'identify') {
+      const reactionText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      reactionText.setAttribute('x', '250');
+      reactionText.setAttribute('y', '150');
+      reactionText.setAttribute('text-anchor', 'middle');
+      reactionText.setAttribute('font-size', '16');
+      reactionText.setAttribute('fill', '#1e293b');
+
+      if (question.type === 'identify') {
+        reactionText.textContent = `Reaction: ${question.reagent.reactions[0]}`;
+      } else {
+        reactionText.textContent = question.reagent.name;
+      }
+      svg.appendChild(reactionText);
+    }
+  }
+
+  // Show question hint
+  const hintText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  hintText.setAttribute('x', '250');
+  hintText.setAttribute('y', '280');
+  hintText.setAttribute('text-anchor', 'middle');
+  hintText.setAttribute('font-size', '12');
+  hintText.setAttribute('fill', '#94a3b8');
+  hintText.textContent = 'Select your answer below';
+  svg.appendChild(hintText);
+}
+
+/**
+ * Select a reagent quiz option
+ */
+function selectReagentOption(selectedBtn) {
+  // Remove selection from all options
+  document.querySelectorAll('#reagent-quiz-options .quiz-option').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+
+  // Select clicked option
+  selectedBtn.classList.add('selected');
+
+  // Enable submit button
+  document.getElementById('reagent-submit-btn').disabled = false;
+}
+
+/**
+ * Handle reagent quiz answer submission
+ */
+function handleReagentSubmitAnswer() {
+  const selectedOption = document.querySelector('#reagent-quiz-options .quiz-option.selected');
+  if (!selectedOption) return;
+
+  const selectedAnswer = selectedOption.textContent;
+  const isCorrect = checkReagentAnswer(selectedAnswer, reagentCurrentQuestion);
+
+  // Update score
+  reagentQuizScore.total++;
+  if (isCorrect) {
+    reagentQuizScore.correct++;
+  }
+
+  // Update score display
+  document.getElementById('reagent-quiz-score').textContent =
+    `${reagentQuizScore.correct}/${reagentQuizScore.total}`;
+
+  // Show feedback
+  const feedback = document.getElementById('reagent-quiz-feedback');
+  feedback.classList.remove('hidden');
+  feedback.classList.toggle('correct', isCorrect);
+  feedback.classList.toggle('incorrect', !isCorrect);
+
+  if (isCorrect) {
+    feedback.innerHTML = '<strong>Correct!</strong>';
+  } else {
+    feedback.innerHTML = `<strong>Incorrect.</strong> The correct answer is: <em>${reagentCurrentQuestion.answer}</em>`;
+  }
+
+  if (reagentCurrentQuestion.explanation) {
+    feedback.innerHTML += `<br><small>${reagentCurrentQuestion.explanation}</small>`;
+  }
+
+  // Highlight correct/incorrect options
+  document.querySelectorAll('#reagent-quiz-options .quiz-option').forEach(btn => {
+    const optionText = btn.textContent;
+    if (optionText === reagentCurrentQuestion.answer) {
+      btn.classList.add('correct');
+    } else if (btn.classList.contains('selected') && !isCorrect) {
+      btn.classList.add('incorrect');
+    }
+    btn.disabled = true;
+  });
+
+  // Disable submit
+  document.getElementById('reagent-submit-btn').disabled = true;
 }
 
 // ============== Theme Functions ==============
