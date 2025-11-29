@@ -41,7 +41,7 @@
   <main>
     <section class="viewer-section">
       <!-- Mode-specific controls -->
-      <div id="cyclohexane-controls" class="mode-controls">
+      <div id="cyclohexane-controls" class="mode-controls hidden">
         <div class="view-toggle">
           <button class="view-btn active" data-view="chair">Chair View</button>
           <button class="view-btn" data-view="newman">Newman Projection</button>
@@ -316,12 +316,9 @@
             <option value="LDA">LDA (bulky)</option>
           </select>
         </div>
-        <div class="control-row">
-          <label for="e2-view-select">View:</label>
-          <select id="e2-view-select">
-            <option value="newman">Newman Projection</option>
-            <option value="chair">Chair Conformation</option>
-          </select>
+        <div class="e2-view-toggle">
+          <button class="e2-view-btn active" data-view="newman">Newman Projection</button>
+          <button class="e2-view-btn" data-view="chair">Chair Conformation</button>
         </div>
         <div class="control-row">
           <label>

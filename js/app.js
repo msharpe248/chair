@@ -106,6 +106,7 @@ let customEnergyConfig = {
 let e2Substrate = '2-bromobutane';
 let e2Base = 'NaOEt';
 let e2ShowHighlighting = true;
+let e2ViewMode = 'newman';  // 'newman' or 'chair'
 let e2QuizActive = false;
 let e2QuizScore = { correct: 0, total: 0 };
 let currentE2Question = null;
@@ -465,6 +466,9 @@ function setupEventListeners() {
   document.getElementById('e2-base-select').addEventListener('change', handleE2BaseChange);
   document.getElementById('e2-show-anti').addEventListener('change', handleE2HighlightToggle);
   document.getElementById('e2-analyze-btn').addEventListener('click', handleE2Analyze);
+  document.querySelectorAll('.e2-view-btn').forEach(btn => {
+    btn.addEventListener('click', handleE2ViewToggle);
+  });
 
   // Alkene stability controls
   document.getElementById('alkene-comparison-set').addEventListener('change', handleAlkeneComparisonChange);
@@ -1536,7 +1540,11 @@ function renderE2View() {
   const svg = document.getElementById('chair-svg');
   console.log('SVG element:', svg);
   try {
-    renderE2Newman(svg, e2Substrate, e2ShowHighlighting);
+    if (e2ViewMode === 'chair') {
+      renderE2Chair(svg, e2Substrate, e2ShowHighlighting);
+    } else {
+      renderE2Newman(svg, e2Substrate, e2ShowHighlighting);
+    }
     updateE2Panel();
     console.log('renderE2View completed successfully');
   } catch (error) {
@@ -1637,6 +1645,344 @@ function handleE2HighlightToggle(e) {
  */
 function handleE2Analyze() {
   renderE2View();
+}
+
+/**
+ * Handle E2 view toggle (Newman vs Chair)
+ */
+function handleE2ViewToggle(e) {
+  const newView = e.target.dataset.view;
+  if (newView === e2ViewMode) return;
+
+  e2ViewMode = newView;
+
+  // Update button states
+  document.querySelectorAll('.e2-view-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === newView);
+  });
+
+  renderE2View();
+}
+
+/**
+ * Render E2 elimination in chair conformation
+ * Shows trans-diaxial requirement for cyclohexane substrates
+ */
+function renderE2Chair(svg, substrateKey, showHighlighting) {
+  // Clear SVG
+  svg.innerHTML = '';
+
+  const config = E2_NEWMAN_CONFIGS[substrateKey];
+  if (!config) return;
+
+  // Check if this is a cyclic substrate
+  if (!config.isCyclic) {
+    // For acyclic substrates, show a message
+    renderAcyclicE2Message(svg, config);
+    return;
+  }
+
+  // Chair geometry constants
+  const centerX = 200;
+  const centerY = 150;
+  const width = 160;
+  const height = 80;
+  const axialLength = 50;
+  const eqLength = 40;
+
+  // Define chair carbon positions (6 carbons)
+  const carbons = [
+    { x: centerX - width/2, y: centerY },                    // C1 (left)
+    { x: centerX - width/4, y: centerY - height/2 },         // C2 (top-left)
+    { x: centerX + width/4, y: centerY - height/2 },         // C3 (top-right)
+    { x: centerX + width/2, y: centerY },                    // C4 (right)
+    { x: centerX + width/4, y: centerY + height/2 },         // C5 (bottom-right)
+    { x: centerX - width/4, y: centerY + height/2 }          // C6 (bottom-left)
+  ];
+
+  // Draw title
+  const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  title.setAttribute('x', '200');
+  title.setAttribute('y', '30');
+  title.setAttribute('text-anchor', 'middle');
+  title.setAttribute('class', 'mechanism-title');
+  title.textContent = config.name + ' - Chair View';
+  svg.appendChild(title);
+
+  // Draw chair bonds
+  for (let i = 0; i < 6; i++) {
+    const next = (i + 1) % 6;
+    const bond = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    bond.setAttribute('x1', carbons[i].x);
+    bond.setAttribute('y1', carbons[i].y);
+    bond.setAttribute('x2', carbons[next].x);
+    bond.setAttribute('y2', carbons[next].y);
+    bond.setAttribute('stroke', '#334155');
+    bond.setAttribute('stroke-width', '2.5');
+    bond.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(bond);
+  }
+
+  // E2 Chair configurations for different substrates
+  const chairConfigs = {
+    'cyclohexyl-bromide': {
+      leavingGroup: { pos: 0, type: 'axial', label: 'Br', color: '#dc2626' },
+      betaHydrogens: [
+        { pos: 1, type: 'axial', canEliminate: true },
+        { pos: 1, type: 'equatorial', canEliminate: false },
+        { pos: 5, type: 'axial', canEliminate: true },
+        { pos: 5, type: 'equatorial', canEliminate: false }
+      ],
+      explanation: 'Axial Br needs axial β-H for E2 (trans-diaxial)'
+    },
+    'menthyl-chloride': {
+      leavingGroup: { pos: 0, type: 'axial', label: 'Cl', color: '#16a34a' },
+      substituents: [
+        { pos: 0, type: 'equatorial', label: 'iPr' },
+        { pos: 1, type: 'equatorial', label: 'Me' },
+        { pos: 4, type: 'equatorial', label: 'Me' }
+      ],
+      betaHydrogens: [
+        { pos: 1, type: 'axial', canEliminate: true }
+      ],
+      explanation: 'Only ONE axial β-H available → ONE product'
+    },
+    'neomenthyl-chloride': {
+      leavingGroup: { pos: 0, type: 'equatorial', label: 'Cl', color: '#16a34a' },
+      substituents: [
+        { pos: 0, type: 'axial', label: 'iPr' },
+        { pos: 1, type: 'axial', label: 'Me' },
+        { pos: 4, type: 'equatorial', label: 'Me' }
+      ],
+      betaHydrogens: [
+        { pos: 1, type: 'equatorial', canEliminate: false }
+      ],
+      explanation: 'Equatorial Cl has NO trans-diaxial H → must ring flip!'
+    }
+  };
+
+  const chairConfig = chairConfigs[substrateKey];
+  if (!chairConfig) return;
+
+  // Helper to determine if axial bond goes up or down at each carbon
+  function axialGoesUp(carbonIdx) {
+    // In a chair: C1, C3, C5 have axial going up; C2, C4, C6 have axial going down
+    // (or vice versa depending on chair orientation)
+    return carbonIdx === 0 || carbonIdx === 2 || carbonIdx === 4;
+  }
+
+  // Helper to get axial/equatorial bond endpoint
+  function getBondEnd(carbonIdx, type) {
+    const c = carbons[carbonIdx];
+
+    if (type === 'axial') {
+      const goesUp = axialGoesUp(carbonIdx);
+      return {
+        x: c.x,
+        y: goesUp ? c.y - axialLength : c.y + axialLength
+      };
+    } else {
+      // Equatorial bonds point outward in the plane of the ring
+      // Angles chosen to point away from ring center and avoid overlaps
+      const eqAngles = [180, -45, 45, 0, 135, -135]; // degrees for each carbon
+      const angle = eqAngles[carbonIdx] * Math.PI / 180;
+      return {
+        x: c.x + Math.cos(angle) * eqLength,
+        y: c.y + Math.sin(angle) * eqLength * 0.5
+      };
+    }
+  }
+
+  // Helper to get label position (offset from bond end)
+  function getLabelPos(bondEnd, carbonPos, type, carbonIdx) {
+    if (type === 'axial') {
+      const goesUp = axialGoesUp(carbonIdx);
+      return {
+        x: bondEnd.x,
+        y: goesUp ? bondEnd.y - 10 : bondEnd.y + 14
+      };
+    } else {
+      // Position label based on equatorial direction for each carbon
+      const eqAngles = [180, -45, 45, 0, 135, -135];
+      const angle = eqAngles[carbonIdx] * Math.PI / 180;
+      return {
+        x: bondEnd.x + Math.cos(angle) * 12,
+        y: bondEnd.y + Math.sin(angle) * 6 + 4
+      };
+    }
+  }
+
+  // Draw leaving group
+  const lg = chairConfig.leavingGroup;
+  const lgEnd = getBondEnd(lg.pos, lg.type);
+  const lgBond = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  lgBond.setAttribute('x1', carbons[lg.pos].x);
+  lgBond.setAttribute('y1', carbons[lg.pos].y);
+  lgBond.setAttribute('x2', lgEnd.x);
+  lgBond.setAttribute('y2', lgEnd.y);
+  lgBond.setAttribute('stroke', lg.color);
+  lgBond.setAttribute('stroke-width', '3');
+  svg.appendChild(lgBond);
+
+  // Leaving group label
+  const lgLabelPos = getLabelPos(lgEnd, carbons[lg.pos], lg.type, lg.pos);
+  const lgLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  lgLabel.setAttribute('x', lgLabelPos.x);
+  lgLabel.setAttribute('y', lgLabelPos.y);
+  lgLabel.setAttribute('text-anchor', 'middle');
+  lgLabel.setAttribute('fill', lg.color);
+  lgLabel.setAttribute('font-weight', 'bold');
+  lgLabel.setAttribute('font-size', '14');
+  lgLabel.textContent = lg.label;
+  svg.appendChild(lgLabel);
+
+  // Draw other substituents
+  if (chairConfig.substituents) {
+    chairConfig.substituents.forEach(sub => {
+      const subEnd = getBondEnd(sub.pos, sub.type);
+      const subBond = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      subBond.setAttribute('x1', carbons[sub.pos].x);
+      subBond.setAttribute('y1', carbons[sub.pos].y);
+      subBond.setAttribute('x2', subEnd.x);
+      subBond.setAttribute('y2', subEnd.y);
+      subBond.setAttribute('stroke', '#64748b');
+      subBond.setAttribute('stroke-width', '2');
+      svg.appendChild(subBond);
+
+      const subLabelPos = getLabelPos(subEnd, carbons[sub.pos], sub.type, sub.pos);
+      const subLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      subLabel.setAttribute('x', subLabelPos.x);
+      subLabel.setAttribute('y', subLabelPos.y);
+      subLabel.setAttribute('text-anchor', 'middle');
+      subLabel.setAttribute('fill', '#64748b');
+      subLabel.setAttribute('font-size', '11');
+      subLabel.textContent = sub.label;
+      svg.appendChild(subLabel);
+    });
+  }
+
+  // Draw β-hydrogens
+  chairConfig.betaHydrogens.forEach(h => {
+    const hEnd = getBondEnd(h.pos, h.type);
+    const hBond = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    hBond.setAttribute('x1', carbons[h.pos].x);
+    hBond.setAttribute('y1', carbons[h.pos].y);
+    hBond.setAttribute('x2', hEnd.x);
+    hBond.setAttribute('y2', hEnd.y);
+
+    if (showHighlighting && h.canEliminate) {
+      hBond.setAttribute('stroke', '#2563eb');
+      hBond.setAttribute('stroke-width', '3');
+    } else {
+      hBond.setAttribute('stroke', '#94a3b8');
+      hBond.setAttribute('stroke-width', '2');
+    }
+    svg.appendChild(hBond);
+
+    const hLabelPos = getLabelPos(hEnd, carbons[h.pos], h.type, h.pos);
+    const hLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    hLabel.setAttribute('x', hLabelPos.x);
+    hLabel.setAttribute('y', hLabelPos.y);
+    hLabel.setAttribute('text-anchor', 'middle');
+    hLabel.setAttribute('font-size', '12');
+
+    if (showHighlighting && h.canEliminate) {
+      hLabel.setAttribute('fill', '#2563eb');
+      hLabel.setAttribute('font-weight', 'bold');
+      hLabel.textContent = 'H (anti)';
+    } else {
+      hLabel.setAttribute('fill', '#94a3b8');
+      hLabel.textContent = 'H';
+    }
+    svg.appendChild(hLabel);
+  });
+
+  // Draw carbon labels - position them to avoid bond overlaps
+  carbons.forEach((c, i) => {
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+
+    // Offset labels based on carbon position to avoid bonds
+    let offsetX = 0, offsetY = 0;
+    switch (i) {
+      case 0: offsetX = -18; offsetY = 4; break;   // C1 left - push further left
+      case 1: offsetX = -12; offsetY = -8; break;  // C2 top-left - push up-left
+      case 2: offsetX = 12; offsetY = -8; break;   // C3 top-right - push up-right
+      case 3: offsetX = 18; offsetY = 4; break;    // C4 right - push further right
+      case 4: offsetX = 12; offsetY = 12; break;   // C5 bottom-right - push down-right
+      case 5: offsetX = -12; offsetY = 12; break;  // C6 bottom-left - push down-left
+    }
+
+    label.setAttribute('x', c.x + offsetX);
+    label.setAttribute('y', c.y + offsetY);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('fill', '#94a3b8');
+    label.setAttribute('font-size', '9');
+    label.textContent = 'C' + (i + 1);
+    svg.appendChild(label);
+  });
+
+  // Draw explanation
+  const explText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  explText.setAttribute('x', '200');
+  explText.setAttribute('y', '280');
+  explText.setAttribute('text-anchor', 'middle');
+  explText.setAttribute('fill', '#64748b');
+  explText.setAttribute('font-size', '12');
+  explText.textContent = chairConfig.explanation;
+  svg.appendChild(explText);
+
+  // Trans-diaxial requirement note
+  const noteText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  noteText.setAttribute('x', '200');
+  noteText.setAttribute('y', '300');
+  noteText.setAttribute('text-anchor', 'middle');
+  noteText.setAttribute('fill', '#2563eb');
+  noteText.setAttribute('font-size', '11');
+  noteText.setAttribute('font-weight', '500');
+  noteText.textContent = 'E2 requires trans-diaxial geometry (LG and H both axial)';
+  svg.appendChild(noteText);
+}
+
+/**
+ * Render message for acyclic substrates in chair view
+ */
+function renderAcyclicE2Message(svg, config) {
+  svg.innerHTML = '';
+
+  const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  title.setAttribute('x', '200');
+  title.setAttribute('y', '100');
+  title.setAttribute('text-anchor', 'middle');
+  title.setAttribute('class', 'mechanism-title');
+  title.textContent = config.name;
+  svg.appendChild(title);
+
+  const msg1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  msg1.setAttribute('x', '200');
+  msg1.setAttribute('y', '160');
+  msg1.setAttribute('text-anchor', 'middle');
+  msg1.setAttribute('fill', '#64748b');
+  msg1.setAttribute('font-size', '14');
+  msg1.textContent = 'Chair view is for cyclohexane substrates.';
+  svg.appendChild(msg1);
+
+  const msg2 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  msg2.setAttribute('x', '200');
+  msg2.setAttribute('y', '185');
+  msg2.setAttribute('text-anchor', 'middle');
+  msg2.setAttribute('fill', '#64748b');
+  msg2.setAttribute('font-size', '14');
+  msg2.textContent = 'Use Newman Projection for acyclic substrates.';
+  svg.appendChild(msg2);
+
+  const msg3 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  msg3.setAttribute('x', '200');
+  msg3.setAttribute('y', '230');
+  msg3.setAttribute('text-anchor', 'middle');
+  msg3.setAttribute('fill', '#2563eb');
+  msg3.setAttribute('font-size', '12');
+  msg3.textContent = 'Try: Bromocyclohexane, Menthyl chloride, or Neomenthyl chloride';
+  svg.appendChild(msg3);
 }
 
 // ============== Alkene Stability Functions ==============

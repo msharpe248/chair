@@ -30,9 +30,13 @@ Understand reaction mechanisms and thermodynamics.
 ### 3. E2 Stereochemistry Viewer
 Master the anti-periplanar requirement for E2 eliminations.
 
-- **Newman Projection Visualization**: See the spatial relationship between β-H and leaving group
+- **Newman Projection View**: See the spatial relationship between β-H and leaving group
+- **Chair Conformation View**: Visualize trans-diaxial requirement for cyclohexane substrates
+  - Toggle between Newman and Chair representations
+  - See why menthyl chloride gives only one product
+  - Understand why neomenthyl chloride must ring flip
 - **Anti-Periplanar Highlighting**: Color-coded bonds show which H's can eliminate
-  - Green = Anti-periplanar (180°) - CAN eliminate
+  - Green/Blue = Anti-periplanar (180°) - CAN eliminate
   - Orange = Gauche (60°) - Cannot eliminate
   - Red = Leaving group
 - **Dihedral Angles**: See the exact angle for each β-hydrogen
@@ -105,8 +109,11 @@ open http://localhost:8080
 1. Select **"E2 Stereochemistry"** from the dropdown
 2. Choose a substrate (e.g., 2-bromobutane, menthyl chloride)
 3. Select a base (bulky vs non-bulky)
-4. Observe which β-hydrogens are anti-periplanar (green)
-5. See the predicted major product
+4. Toggle between **Newman Projection** and **Chair Conformation** views
+   - Newman shows anti-periplanar geometry for any substrate
+   - Chair shows trans-diaxial requirement for cyclohexane substrates
+5. Observe which β-hydrogens can eliminate (highlighted in blue/green)
+6. See the predicted major product
 
 ## Supported Substituents (Chair Viewer)
 
@@ -140,6 +147,10 @@ When bulky substituents occupy axial positions, they experience steric strain wi
 
 ### E2 Anti-Periplanar Requirement
 E2 elimination requires the β-hydrogen and leaving group to be at a 180° dihedral angle (anti-periplanar). This allows proper orbital overlap for the concerted mechanism.
+
+For cyclohexane substrates, this means the leaving group and β-hydrogen must both be **axial** and on opposite faces of the ring (**trans-diaxial**). This geometric constraint explains why:
+- **Menthyl chloride** (axial Cl) gives only ONE alkene product
+- **Neomenthyl chloride** (equatorial Cl) must first ring-flip to place Cl axial before elimination can occur
 
 ### Mechanism Selection (SN1/SN2/E1/E2)
 The choice of mechanism depends on:
