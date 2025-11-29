@@ -1316,6 +1316,13 @@ function handleViewerChange(e) {
   const modeSelector = document.getElementById('chair-mode-selector');
   modeSelector.style.display = currentViewer === 'chair' ? '' : 'none';
 
+  // Hide chair mode controls when not in chair viewer
+  if (currentViewer !== 'chair') {
+    document.getElementById('cyclohexane-controls').classList.add('hidden');
+    document.getElementById('pyranose-controls').classList.add('hidden');
+    document.getElementById('decalin-controls').classList.add('hidden');
+  }
+
   // Show/hide viewer-specific panels
   const energyPanel = document.getElementById('energy-panel');
   const reactionPanel = document.getElementById('reaction-energy-panel');
